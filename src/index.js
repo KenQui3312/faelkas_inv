@@ -7,6 +7,7 @@ export { Sidebar } from './components/organismos/sidebar/Sidebar';
 export { SidebarCard } from './components/organismos/sidebar/SidebarCard';
 export { HomeTemplate } from './components/templates/HomeTemplate';
 export { AuthContextProvider, UserAuth } from './context/AuthContext';
+export { ProtectedRoute } from './hooks/ProtectedRoute';
 export { Home } from './pages/Home';
 export { Login } from './pages/Login';
 export { PageBase } from './pages/PageBase';

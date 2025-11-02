@@ -15,7 +15,7 @@ export const AuthContextProvider= ({children})=>{
 
                 }
             }
-        })
+        });
         return()=>{
             authListener.subscription;
         }

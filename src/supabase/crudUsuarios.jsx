@@ -7,7 +7,7 @@ export const InsertarUsuarios= async(p)=>{
             icon:"error",
             tittle: "Oops...",
             text:"Error al insertar usuarios!" + error.message
-        })
+        });
     }
     if(data) return data;
 }
