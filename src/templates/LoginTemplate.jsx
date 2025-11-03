@@ -2,7 +2,9 @@ import styled from "styled-components";
 import { Btnsave, useUsuariosStore } from "../index";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+
 export function LoginTemplate(){
+  
     const navigate= useNavigate();
     const {insertarUsuarioAdmin}=useUsuariosStore();
     const mutationInsertUser=useMutation({
@@ -18,6 +20,7 @@ export function LoginTemplate(){
             }
         }
     });
+    
     return (<Container>
     <Btnsave titulo="Crear cuenta" bgcolor="#fff" funcion={mutationInsertUser.mutateAsync}/>
     </Container>);
