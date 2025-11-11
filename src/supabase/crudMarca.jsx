@@ -1,8 +1,7 @@
 import { supabase } from "../index";
 import Swal from "sweetalert2";
-export async function InsertarCategorias(p) {
-  try {
-     const { error } = await supabase.rpc("insertarcategorias", p);
+export async function InsertarMarca(p) {
+     const { error } = await supabase.rpc("insertarmarca", p);
      if (error) {
       Swal.fire({
         icon: "error",
@@ -11,51 +10,45 @@ export async function InsertarCategorias(p) {
         footer: '<a href="">Agregue una nueva descripcion</a>',
       });
     }
-  } catch (error) {
-    
-  }
+ 
  
 }
-export async function MostrarCategorias(p) {
-  try {
+export async function MostrarMarca(p) {
+ 
     const { data } = await supabase
-      .from("categorias")
+      .from("marca")
       .select()
-      .eq("id_empresa", p.idempresa)
+      .eq("id_empresa", p.id_empresa)
       .order("id", { ascending: true });
     return data;
-  } catch (error) {}
+  
 }
-export async function EliminarCategorias(p) {
-  try {
+export async function EliminarMarca(p) {
+ 
     const { error } = await supabase
-      .from("categorias")
+      .from("marca")
       .delete()
       .eq("id", p.id);
     if (error) {
       alert("Error al eliminar", error);
     }
-  } catch (error) {
-    alert(error.error_description || error.message + " eliminar categorias");
-  }
+
 }
-export async function EditarCategorias(p) {
-  try {
+export async function EditarMarca(p) {
+  
     const { error } = await supabase
-      .from("categorias")
+      .from("marca")
       .update(p)
       .eq("id", p.id);
     if (error) {
-      alert("Error al editar categoria", error);
+      alert("Error al editar marca", error);
     }
-  } catch (error) {
-    alert(error.error_description || error.message + " editar categorias");
-  }
+
 }
-export async function EliminarCategoriasTodas(p) {
-  try {
+export async function EliminarMarcaTodas(p) {
+
     const { error } = await supabase
-      .from("categorias")
+      .from("marca")
       .delete()
       .eq("idusuario", p.idusuario);
     if (error) {
@@ -68,14 +61,12 @@ export async function EliminarCategoriasTodas(p) {
       showConfirmButton: false,
       timer: 1000,
     });
-  } catch (error) {
-    alert(error.error_description || error.message + " eliminar categorias");
-  }
+ 
 }
-export async function BuscarCategorias(p) {
+export async function BuscarMarca(p) {
   try {
     const { data } = await supabase
-      .from("categorias")
+      .from("marca")
       .select()
       .eq("id_empresa", p.id_empresa)
       .ilike("descripcion","%"+ p.descripcion+"%")
