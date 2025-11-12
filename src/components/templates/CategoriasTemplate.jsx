@@ -162,9 +162,3 @@ const Container = styled.div`
     /* background-color: rgba(179, 46, 241, 0.14); */
   }
 `;
-
-// Se agrega el styled component ContentFiltro si no existe en otro lado
-const ContentFiltro = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-`;

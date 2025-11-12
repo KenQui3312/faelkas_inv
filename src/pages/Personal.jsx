@@ -22,6 +22,12 @@ import { usePermisosStore } from "../store/PermisosStore";
 import { BloqueoPagina } from "../components/moleculas/BloqueoPagina";
 // Componente que bloquea la pantalla si el usuario no tiene permisos.
 
+import { useMarcaStore } from "../store/MarcaStore";
+// Store de marcas para obtener el texto del buscador.
+
+import { MarcaTemplate } from "../components/templates/MarcaTemplate";
+// Template visual que renderiza la información de marcas.
+
 export function Personal() {
   // Obtiene los permisos del usuario
   const { datapermisos } = usePermisosStore();
@@ -72,11 +78,6 @@ export function Personal() {
   // Render principal: envía los datos de usuarios al template visual
   return (
     <>
-      <PersonalTemplate data={datausuariosTodos} />
-    </>
-  );
-}
-
       <PersonalTemplate data={datausuariosTodos} />
     </>
   );
