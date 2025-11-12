@@ -11,25 +11,19 @@ import {
   EliminarPermisos,
 } from "../index";
 
-// Store de usuarios con gestión de autenticación, CRUD y permisos de módulos
 export const useUsuariosStore = create((set, get) => ({
-  // Array de módulos marcados como seleccionados
   datamoduloscheck: [],
   setdatamodulosCheck: (p) => {
     set({ datamoduloscheck: p });
   },
-  // ID del usuario actualmente en sesión
   idusuario: 0,
-  // Resetea el ID de usuario a 0
   setiduser: () => {
     set({ idusuario: 0 });
   },
-  // Datos del usuario actual
   datausuarios: [],
-  // Lista de todos los usuarios del sistema
   datausuariosTodos: [],
 
-  // Obtiene los datos del usuario actual con manejo de errores mejorado
+  // ✅ CORREGIDO: mostrarUsuarios con mejor manejo de null
   mostrarUsuarios: async () => {
     try {
       const response = await MostrarUsuarios();
@@ -52,28 +46,26 @@ export const useUsuariosStore = create((set, get) => ({
     }
   },
 
-  // Obtiene la lista completa de usuarios
   mostrarUsuariosTodos: async (p) => {
     const response = await MostrarUsuariosTodos(p);
     set({ datausuariosTodos: response });
     return response;
   },
 
-  // Actualiza el tema y moneda del usuario, luego refresca sus datos
   editartemamonedauser: async (p) => {
     await EditarTemaMonedaUser(p);
     const { mostrarUsuarios } = get();
     await mostrarUsuarios(); // ✅ Agregar await
   },
 
-  // Edita un usuario y actualiza sus permisos (elimina antiguos e inserta nuevos)
+  // ✅ CORREGIDO: editarusuario con mejor manejo de async
   editarusuario: async (p, datacheckpermisos, idempresa) => {
     try {
       await Editarusuarios(p);
       const { mostrarUsuariosTodos } = get();
       await EliminarPermisos({ id_usuario: p.id });
 
-      //  CORREGIDO: Usar Promise.all para permisos
+      // ✅ CORREGIDO: Usar Promise.all para permisos
       const permisosPromises = datacheckpermisos
         .filter((item) => item.check)
         .map(async (item) => {
@@ -92,12 +84,12 @@ export const useUsuariosStore = create((set, get) => ({
     }
   },
 
- // Registra un usuario administrador: primero en Auth, luego en la tabla usuarios
+ // En insertarUsuarioAdmin
   insertarUsuarioAdmin: async (p) => {
   try {
     console.log('🔵 [1/3] Iniciando registro para:', p.correo);
     
-    //  1. Registrar en Auth de Supabase
+    // ✅ 1. Registrar en Auth de Supabase
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: p.correo.toLowerCase().trim(),
       password: p.pass,
@@ -113,7 +105,7 @@ export const useUsuariosStore = create((set, get) => ({
 
     console.log('✅ [1/3] Usuario creado en Auth:', signUpData.user.id);
 
-    //  2. Insertar en tabla usuarios - SOLO campos necesarios, SIN id
+    // ✅ 2. Insertar en tabla usuarios - SOLO campos necesarios, SIN id
     console.log('🔵 [2/3] Insertando en tabla usuarios...');
     
     const datosUsuario = {
@@ -122,7 +114,7 @@ export const useUsuariosStore = create((set, get) => ({
       fecharegistro: new Date().toISOString(),
       tipouser: p.tipouser,
       estado: "activo"
-      //  NO incluir campo 'id' - se generará automáticamente
+      // ✅ NO incluir campo 'id' - se generará automáticamente
     };
     
     console.log('🔵 Datos para insertar (SIN ID):', datosUsuario);
@@ -139,12 +131,11 @@ export const useUsuariosStore = create((set, get) => ({
   }
 },
 
-  // Inserta un usuario en la tabla (el ID se genera automáticamente por la BD)
   insertarUsuarios: async (p) => {
   try {
     console.log("🟡 InsertarUsuarios - Parametros recibidos:", p);
     
-    //  CREAR un nuevo objeto SIN el campo id
+    // ✅ CREAR un nuevo objeto SIN el campo id
     const datosParaInsertar = {
       idauth: p.idauth,
       correo: p.correo,
@@ -156,7 +147,7 @@ export const useUsuariosStore = create((set, get) => ({
       telefono: p.telefono || null,
       direccion: p.direccion || null,
       tipodoc: p.tipodoc || null
-      //  NO incluir el campo 'id' - se generará automáticamente
+      // ✅ NO incluir el campo 'id' - se generará automáticamente
     };
     
     console.log("🟡 Datos para insertar (SIN ID):", datosParaInsertar);
@@ -191,7 +182,7 @@ export const useUsuariosStore = create((set, get) => ({
   }
 },
 
-  // Prueba la conexión con Supabase (Auth y tabla usuarios)
+  // ✅ FUNCIÓN MEJORADA: testSupabaseConnection
   testSupabaseConnection: async () => {
     try {
       console.log("🧪 Testeando conexión Supabase...");
@@ -225,7 +216,7 @@ export const useUsuariosStore = create((set, get) => ({
     }
   },
 
-  // Limpia todos los datos de usuario del store
+  // ✅ NUEVA FUNCIÓN: Limpiar estado de usuario
   limpiarUsuario: () => {
     set({
       datausuarios: [],

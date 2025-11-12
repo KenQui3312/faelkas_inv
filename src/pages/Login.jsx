@@ -1,22 +1,14 @@
 import styled from "styled-components";
-// Importa styled-components para definir estilos CSS en JS.
-// En este archivo se define un contenedor `Container` al final, aunque actualmente no se usa.
+import {LoginTemplate} from "../index"
 
-import { LoginTemplate } from "../index";
-// Importa el componente visual LoginTemplate, que contiene la estructura de la pantalla de login.
-
+// Componente principal de la página de Login
 export function Login() {
-  // Componente funcional principal que representa la pantalla de login.
-  // Su propósito es renderizar el template de login.
-
   return (
     <>
-      {/* Se renderiza el componente LoginTemplate */}
-      <LoginTemplate />
+    {/* Renderiza el template del formulario de login */}
+    <LoginTemplate />
     </>
   );
 }
-
-// Definición de un contenedor estilizado usando styled-components.
-// Actualmente está vacío, pero se puede usar para envolver contenido o agregar estilos futuros.
+// Contenedor con estilos (actualmente sin estilos aplicados)
 const Container = styled.div``;

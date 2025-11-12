@@ -6,69 +6,68 @@ import { SpinnerLoader } from "../components/moleculas/SpinnerLoader";
 import { usePermisosStore, BloqueoPagina } from "../index";
 
 export function Categorias() {
-  // Todos los hooks deben declararse antes de cualquier condicional o return
-
-  // 1. Hooks del store (Zustand): obtenemos estados y funciones relacionadas con categorías, permisos y empresa
-  const { datapermisos } = usePermisosStore(); // Contiene los permisos del usuario
+  // TODOS LOS HOOKS PRIMERO - en el mismo orden siempre
+  
+  // 1. Store hooks
+  const { datapermisos } = usePermisosStore();
   const { mostrarCategorias, datacategorias, buscarCategorias, buscador } =
-    useCategoriasStore(); // Funciones para obtener y buscar categorías, además del estado actual
-  const { dataempresa } = useEmpresaStore(); // Datos de la empresa seleccionada en sesión
+    useCategoriasStore();
+  const { dataempresa } = useEmpresaStore();
 
-  // 2. React Query: consulta principal para obtener las categorías existentes en la empresa
+  // 2. React Query hooks
   const { data, isLoading, error } = useQuery({
-    queryKey: ["mostrar categorias", dataempresa?.id], // Clave que identifica la consulta en caché
-    queryFn: () => mostrarCategorias({ idempresa: dataempresa.id }), // Llamada al backend usando función del store
-    enabled: dataempresa?.id != null, // Se ejecuta únicamente si existe empresa seleccionada
+    queryKey: ["mostrar categorias", dataempresa?.id],
+    queryFn: () => mostrarCategorias({ idempresa: dataempresa.id }),
+    enabled: dataempresa?.id != null,
   });
 
-  // React Query secundaria: búsqueda de categorías filtradas por texto del buscador
+  // CORREGIDO: Hook de búsqueda con manejo de undefined
   const { data: buscar } = useQuery({
-    queryKey: ["buscar categorias", buscador], // Se vuelve a ejecutar cada vez que cambia el texto del buscador
+    queryKey: ["buscar categorias", buscador],
     queryFn: async () => {
-      // Si el buscador está vacío, no se realiza ninguna búsqueda
+      // ✅ Si no hay término de búsqueda, retornar array vacío
       if (!buscador || buscador.trim() === "") {
         return [];
       }
       
-      // Si no existe empresa, evita ejecutar la consulta
+      // Si no hay empresa, retornar array vacío
       if (!dataempresa?.id) {
         return [];
       }
       
-      // Ejecuta la búsqueda y retorna siempre un arreglo para evitar valores undefined
+      // Ejecutar búsqueda y asegurar retorno
       const resultado = await buscarCategorias({ 
         descripcion: buscador, 
         id_empresa: dataempresa.id 
       });
       
+      // Asegurar que nunca retorne undefined
       return resultado || [];
     },
-    enabled: dataempresa?.id != null, // Se ejecuta únicamente si hay empresa
+    enabled: dataempresa?.id != null, // Mantener habilitado incluso con buscador vacío
   });
 
-  // Validación de permisos del usuario: verifica si el módulo "Categoria de productos" está permitido
+  // LÓGICA CONDICIONAL DESPUÉS de todos los hooks
   const statePermiso = datapermisos?.some((objeto) =>
     objeto.modulos.nombre.includes("Categoria de productos")
   );
 
-  console.log(statePermiso); // Debug: imprime en consola si tiene permisos
+  console.log(statePermiso);
 
-  // Si el usuario no tiene permisos, bloquea el acceso a la página
+  // RETURNS CONDICIONALES al FINAL
   if (!statePermiso) {
     return <BloqueoPagina />;
   }
 
-  // Si la consulta está cargando, se muestra un loader en pantalla
   if (isLoading) {
     return <SpinnerLoader />;
   }
 
-  // Si ocurrió un error en la consulta, se muestra mensaje de error
   if (error) {
     return <span>Error...</span>;
   }
 
-  // Render principal: envía las categorías obtenidas al template visual
+  // RENDER PRINCIPAL
   return (
     <>
       <CategoriasProTemplate data={datacategorias} />

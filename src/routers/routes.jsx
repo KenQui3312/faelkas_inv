@@ -1,6 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-// React Router DOM para definir rutas y navegación en la aplicación.
-
 import {
   Login,
   Home,
@@ -12,27 +10,19 @@ import {
   Personal,
   Empresa,
   Kardex,
+ 
   Reportes,
   StockActualPorProducto,
   StockBajoMinimo,
   KardexEntradaSalida,
   StockInventarioValorado,
 } from "../index";
-// Importa todos los componentes de páginas y templates desde el índice principal.
 
 import StockActualTodos from "../components/organismos/report/StockActualTodos";
-// Componente específico de reporte: stock actual de todos los productos.
-
 import { Layout } from "../hooks/Layout";
-// Componente Layout que envuelve las páginas autenticadas para mostrar navbar, sidebar, etc.
-
 export function MyRoutes() {
-  // Componente principal de rutas de la aplicación.
-  // Define todas las rutas y su nivel de protección según autenticación.
-
   return (
     <Routes>
-      {/* Ruta de login, accesible solo para usuarios no autenticados */}
       <Route
         path="/login"
         element={
@@ -42,7 +32,6 @@ export function MyRoutes() {
         }
       />
 
-      {/* Ruta principal "/" para usuarios autenticados */}
       <Route
         path="/"
         element={
@@ -53,8 +42,6 @@ export function MyRoutes() {
           </ProtectedRoute>
         }
       />
-
-      {/* Configuración de usuarios */}
       <Route
         path="/configurar/usuarios"
         element={
@@ -65,8 +52,6 @@ export function MyRoutes() {
           </ProtectedRoute>
         }
       />
-
-      {/* Página principal de configuración */}
       <Route
         path="/configurar"
         element={
@@ -77,8 +62,6 @@ export function MyRoutes() {
           </ProtectedRoute>
         }
       />
-
-      {/* Configuración de categorías */}
       <Route
         path="/configurar/categorias"
         element={
@@ -89,8 +72,6 @@ export function MyRoutes() {
           </ProtectedRoute>
         }
       />
-
-      {/* Configuración de productos */}
       <Route
         path="/configurar/productos"
         element={
@@ -101,8 +82,6 @@ export function MyRoutes() {
           </ProtectedRoute>
         }
       />
-
-      {/* Configuración de marcas */}
       <Route
         path="/configurar/marca"
         element={
@@ -113,8 +92,6 @@ export function MyRoutes() {
           </ProtectedRoute>
         }
       />
-
-      {/* Configuración de empresa */}
       <Route
         path="/configurar/empresa"
         element={
@@ -125,8 +102,6 @@ export function MyRoutes() {
           </ProtectedRoute>
         }
       />
-
-      {/* Módulo Kardex */}
       <Route
         path="/kardex"
         element={
@@ -137,8 +112,6 @@ export function MyRoutes() {
           </ProtectedRoute>
         }
       />
-
-      {/* Módulo Reportes */}
       <Route
         path="/reportes"
         element={
@@ -149,7 +122,6 @@ export function MyRoutes() {
           </ProtectedRoute>
         }
       >
-        {/* Subrutas de reportes */}
         <Route path="stock-actual-todos" element={<StockActualTodos />} />
         <Route
           path="stock-actual-por-producto"
@@ -168,4 +140,3 @@ export function MyRoutes() {
     </Routes>
   );
 }
-
