@@ -4,6 +4,7 @@ import {
   AiOutlineSetting,
 } from "react-icons/ai";
 
+// Array para el menú desplegable del usuario
 export const DesplegableUser = [
 
   {
@@ -12,7 +13,6 @@ export const DesplegableUser = [
     tipo: "cerrarsesion",
   },
 ];
-
 
 
 //data SIDEBAR
@@ -107,7 +107,7 @@ export const TipouserData = [
     icono: "👑",
   },
 ];
-//tipodoc
+//tipo de documento de identificación
 export const TipoDocData = [
   {
     descripcion: "Dni",
