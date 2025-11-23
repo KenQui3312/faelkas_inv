@@ -1,8 +1,8 @@
+import React, { useState, useEffect } from "react"; // ✅ Solo una importación
 import styled from "styled-components";
 import { useEmpresaStore } from "../store/EmpresaStore";
 import { usePermisosStore } from "../store/PermisosStore";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
 import { Sidebar } from "../components/organismos/sidebar/Sidebar";
 import { Menuambur } from "../components/organismos/Menuambur";
 import { Device } from "../styles/breakpoints";
@@ -12,7 +12,7 @@ import { SpinnerLoader } from "../components/moleculas/SpinnerLoader";
 export function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { mostrarUsuarios, datausuarios } = useUsuariosStore();
-  const { mostrarEmpresa } = useEmpresaStore();
+  const { mostrarEmpresa, dataempresa } = useEmpresaStore();
   const { mostrarPermisos } = usePermisosStore();
 
   // ✅ Consulta para usuarios - siempre ejecutar pero manejar null
@@ -40,7 +40,7 @@ export function Layout({ children }) {
       }
       return mostrarEmpresa({ idusuario: datausuarios.id });
     },
-    enabled: !!datausuarios?.id, // Solo se ejecuta si hay ID de usuario
+    enabled: !!datausuarios?.id,
   });
 
   // ✅ Consulta para permisos - solo si hay usuario
@@ -57,7 +57,7 @@ export function Layout({ children }) {
       }
       return mostrarPermisos({ id_usuario: datausuarios.id });
     },
-    enabled: !!datausuarios?.id, // Solo se ejecuta si hay ID de usuario
+    enabled: !!datausuarios?.id,
   });
 
   // ✅ Efecto para debuggear
@@ -66,11 +66,12 @@ export function Layout({ children }) {
       datausuarios,
       usuarios,
       empresa,
+      dataempresa,
       permisos,
       isLoadingUsuarios,
       errorUsuarios,
     });
-  }, [datausuarios, usuarios, empresa, permisos, isLoadingUsuarios, errorUsuarios]);
+  }, [datausuarios, usuarios, empresa, dataempresa, permisos, isLoadingUsuarios, errorUsuarios]);
 
   // ✅ Loading state - solo si está cargando Y hay usuario
   if (isLoadingUsuarios && datausuarios) {
@@ -130,7 +131,12 @@ export function Layout({ children }) {
           </div>
         )}
         
-        {children}
+        {/* ✅ Pasar empresa como prop a los children */}
+        {React.Children.map(children, child => 
+          React.isValidElement(child) 
+            ? React.cloneElement(child, { empresa: dataempresa?.[0] || empresa })
+            : child
+        )}
       </Containerbody>
     </Container>
   );

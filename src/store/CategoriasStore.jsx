@@ -16,10 +16,9 @@ export const useCategoriasStore = create((set, get) => ({
   categoriaItemSelect: [],
   parametros: {},
   mostrarCategorias: async (p) => {
-    const response = await MostrarCategorias(p);
-    set({ parametros: p });
+    const params = p?.idempresa ? { id_empresa: p.idempresa } : {};
+    const response = await MostrarCategorias(params);
     set({ datacategorias: response });
-    set({ categoriaItemSelect: response[0] });
     return response;
   },
   selectCategoria: (p) => {

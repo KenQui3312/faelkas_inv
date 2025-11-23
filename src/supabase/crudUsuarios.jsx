@@ -1,5 +1,61 @@
 import Swal from "sweetalert2";
-import { ObtenerIdAuthSupabase, supabase, usePermisosStore } from "../index";
+import { ObtenerIdAuthSupabase, supabase } from "../index";
+
+// ✅ FUNCIÓN AUXILIAR: Obtener id_empresa del usuario autenticado
+const obtenerIdEmpresaUsuario = async () => {
+  try {
+    const idAuth = await ObtenerIdAuthSupabase();
+    console.log("🔍 Obteniendo id_empresa para usuario auth:", idAuth);
+    
+    if (!idAuth) {
+      console.warn("⚠️ No hay usuario autenticado");
+      return null;
+    }
+
+    // Primero obtener el id del usuario en la tabla usuarios
+    const { data: usuarioData, error: usuarioError } = await supabase
+      .from("usuarios")
+      .select("id")
+      .eq("idauth", idAuth)
+      .single();
+
+    if (usuarioError) {
+      console.error("❌ Error obteniendo usuario:", usuarioError);
+      return null;
+    }
+
+    if (!usuarioData) {
+      console.warn("⚠️ Usuario no encontrado en tabla usuarios");
+      return null;
+    }
+
+    console.log("🔍 ID usuario encontrado:", usuarioData.id);
+
+    // Luego obtener la empresa asignada
+    const { data: asignacionData, error: asignacionError } = await supabase
+      .from("asignarempresa")
+      .select("id_empresa")
+      .eq("id_usuario", usuarioData.id)
+      .single();
+
+    if (asignacionError) {
+      console.error("❌ Error obteniendo asignación:", asignacionError);
+      return null;
+    }
+
+    if (!asignacionData) {
+      console.warn("⚠️ No se encontró empresa asignada al usuario");
+      return null;
+    }
+
+    console.log("✅ ID Empresa obtenido:", asignacionData.id_empresa);
+    return asignacionData.id_empresa;
+
+  } catch (error) {
+    console.error("❌ Error en obtenerIdEmpresaUsuario:", error);
+    return null;
+  }
+};
 
 export const InsertarUsuarios = async (p) => {
   try {
@@ -38,12 +94,11 @@ export const InsertarUsuarios = async (p) => {
   }
 };
 
-
 export const InsertarAsignaciones = async (p) => {
   try {
     console.log("🟡 InsertarAsignaciones - Parametros:", p);
     
-    const { data, error } = await supabase.from("asignarempresa").insert([p]).select(); // ✅ Agregado select()
+    const { data, error } = await supabase.from("asignarempresa").insert([p]).select();
 
     if (error) {
       console.error("❌ Error insertando asignación:", error);
@@ -52,7 +107,7 @@ export const InsertarAsignaciones = async (p) => {
         title: "Oops...",
         text: "Error al insertar asignación: " + error.message,
       });
-      throw error; // ✅ CORREGIDO: Lanzar el error
+      throw error;
     }
 
     console.log("✅ Asignación insertada correctamente:", data);
@@ -60,7 +115,7 @@ export const InsertarAsignaciones = async (p) => {
 
   } catch (error) {
     console.error("❌ Error en InsertarAsignaciones:", error);
-    throw error; // ✅ CORREGIDO: Propagar el error
+    throw error;
   }
 };
 
@@ -69,7 +124,6 @@ export const MostrarUsuarios = async () => {
     const idAuthSupabase = await ObtenerIdAuthSupabase();
     console.log("🟡 MostrarUsuarios - ID Auth:", idAuthSupabase);
     
-    // ✅ Manejar explícitamente el caso de no autenticación
     if (!idAuthSupabase) {
       console.log("⚠️ No hay usuario autenticado - retornando null");
       return null;
@@ -82,7 +136,6 @@ export const MostrarUsuarios = async () => {
       .single();
 
     if (error) {
-      // ✅ Manejar específicamente el error 406 (Not Acceptable)
       if (error.code === '406' || error.message.includes('406')) {
         console.log("⚠️ Usuario no encontrado en tabla - puede ser nuevo registro");
         return null;
@@ -106,29 +159,184 @@ export const MostrarUsuarios = async () => {
   }
 };
 
-export const MostrarUsuariosTodos = async (p) => {
+// crudUsuarios.jsx - VERSIÓN SIMPLIFICADA
+// En crudUsuarios.jsx - VERSIÓN QUE MUESTRA TODOS LOS USUARIOS
+export const MostrarUsuariosTodos = async (p = {}) => {
   try {
-    console.log("🟡 MostrarUsuariosTodos - Parametros:", p);
+    console.log("=== MOSTRAR TODOS LOS USUARIOS ===");
     
-    const { error, data } = await supabase.rpc("mostrarpersonal", {
-      _id_empresa: p._id_empresa,
-    });
+    // ✅ OPCIÓN 1: Si se proporciona _id_empresa, filtrar por empresa
+    if (p._id_empresa) {
+      console.log("🔍 Filtrando por empresa:", p._id_empresa);
+      
+      const { data, error } = await supabase.rpc("mostrarpersonal", {
+        _id_empresa: p._id_empresa
+      });
+
+      if (error) {
+        console.error("❌ Error en RPC mostrarpersonal:", error);
+        return await consultaDirectaUsuarios(p._id_empresa);
+      }
+
+      console.log("✅ Usuarios encontrados (filtrados por empresa):", data?.length || 0);
+      return data || [];
+    }
+    
+    // ✅ OPCIÓN 2: Si NO se proporciona empresa, mostrar TODOS los usuarios
+    console.log("🌍 Mostrando TODOS los usuarios (sin filtro de empresa)");
+    
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("id, nombres, tipouser, estado, correo, nro_doc, telefono, direccion, tipodoc")
+      .order("nombres");
 
     if (error) {
-      console.error("❌ Error en RPC mostrarpersonal:", error);
-      throw error; // ✅ CORREGIDO: Lanzar el error
+      console.error("❌ Error cargando todos los usuarios:", error);
+      throw error;
     }
 
-    if (data) {
-      console.log("✅ Usuarios encontrados:", data.length);
-      return data;
-    }
-
-    return [];
+    console.log("✅ TODOS los usuarios cargados:", data?.length || 0);
+    return data || [];
 
   } catch (error) {
     console.error("❌ Error en MostrarUsuariosTodos:", error);
-    throw error; // ✅ CORREGIDO: Propagar el error
+    
+    // Fallback: intentar cargar todos los usuarios de otra manera
+    try {
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("*")
+        .limit(100);
+      
+      if (!error) return data || [];
+    } catch (fallbackError) {
+      console.error("❌ Error en fallback:", fallbackError);
+    }
+    
+    return [];
+  }
+};
+
+// ✅ NUEVA FUNCIÓN: Buscar usuarios con id_empresa automático
+export const BuscarUsuarios = async (buscador) => {
+  try {
+    console.log("🔍 BuscarUsuarios - Término de búsqueda:", buscador);
+    
+    const idEmpresa = await obtenerIdEmpresaUsuario();
+    
+    if (!idEmpresa) {
+      console.warn("⚠️ No se pudo obtener id_empresa para búsqueda");
+      return [];
+    }
+    
+    console.log("🔄 Llamando RPC buscarpersonal con:", {
+      buscador,
+      _id_empresa: idEmpresa
+    });
+    
+    const { data, error } = await supabase.rpc("buscarpersonal", {
+      buscador: buscador,
+      _id_empresa: idEmpresa
+    });
+
+    if (error) {
+      console.error("❌ Error en RPC buscarpersonal:", error);
+      throw error;
+    }
+
+    console.log("✅ Resultados de búsqueda:", data?.length || 0);
+    return data || [];
+
+  } catch (error) {
+    console.error("❌ Error en BuscarUsuarios:", error);
+    throw error;
+  }
+};
+
+// ✅ NUEVA FUNCIÓN: Eliminar usuario
+export const EliminarUsuario = async (p) => {
+  try {
+    console.log("🟡 EliminarUsuario - Parámetros:", p);
+    
+    const { error } = await supabase
+      .from("usuarios")
+      .delete()
+      .eq("id", p.id);
+
+    if (error) {
+      console.error("❌ Error eliminando usuario:", error);
+      throw error;
+    }
+
+    console.log("✅ Usuario eliminado correctamente");
+    return { success: true };
+
+  } catch (error) {
+    console.error("❌ Error en EliminarUsuario:", error);
+    throw error;
+  }
+};
+
+// ✅ NUEVA FUNCIÓN: Eliminar asignación de usuario
+export const EliminarAsignacionUsuario = async (p) => {
+  try {
+    console.log("🟡 EliminarAsignacionUsuario - Parámetros:", p);
+    
+    const { error } = await supabase
+      .from("asignarempresa")
+      .delete()
+      .eq("id_usuario", p.id_usuario);
+
+    if (error) {
+      console.error("❌ Error eliminando asignación:", error);
+      throw error;
+    }
+
+    console.log("✅ Asignación eliminada correctamente");
+    return { success: true };
+
+  } catch (error) {
+    console.error("❌ Error en EliminarAsignacionUsuario:", error);
+    throw error;
+  }
+};
+
+// ✅ FUNCIÓN PRIVADA: Consulta directa como fallback
+const consultaDirectaUsuarios = async (idEmpresa) => {
+  try {
+    console.log("🔄 Ejecutando consulta directa para empresa:", idEmpresa);
+    
+    const { data, error } = await supabase
+      .from('asignarempresa')
+      .select(`
+        id,
+        usuarios!inner(
+          id,
+          nombres,
+          tipouser,
+          estado,
+          correo,
+          nro_doc,
+          telefono,
+          direccion,
+          tipodoc
+        )
+      `)
+      .eq('id_empresa', idEmpresa);
+
+    if (error) {
+      console.error("❌ Error en consulta directa:", error);
+      throw error;
+    }
+
+    const usuarios = data?.map(item => item.usuarios).filter(Boolean) || [];
+    console.log("✅ Usuarios encontrados via consulta directa:", usuarios.length);
+    
+    return usuarios;
+    
+  } catch (error) {
+    console.error("❌ Error en consultaDirectaUsuarios:", error);
+    return [];
   }
 };
 
@@ -145,7 +353,7 @@ export async function EditarTemaMonedaUser(p) {
         title: "Error",
         text: "Error al editar configuración: " + error.message,
       });
-      throw error; // ✅ CORREGIDO: Lanzar el error
+      throw error;
     }
 
     if (data) {
@@ -161,7 +369,7 @@ export async function EditarTemaMonedaUser(p) {
 
   } catch (error) {
     console.error("❌ Error en EditarTemaMonedaUser:", error);
-    throw error; // ✅ CORREGIDO: Propagar el error
+    throw error;
   }
 }
 
@@ -184,7 +392,7 @@ export async function Editarusuarios(p) {
         title: "Error",
         text: "Error al editar usuario: " + error.message,
       });
-      throw error; // ✅ CORREGIDO: Lanzar el error
+      throw error;
     }
 
     if (data) {
@@ -200,11 +408,10 @@ export async function Editarusuarios(p) {
 
   } catch (error) {
     console.error("❌ Error en Editarusuarios:", error);
-    throw error; // ✅ CORREGIDO: Propagar el error
+    throw error;
   }
 }
 
-// ✅ FUNCIÓN ADICIONAL: Verificar estructura de tabla
 export const verificarEstructuraTabla = async () => {
   try {
     console.log("🔍 Verificando estructura de tabla usuarios...");
@@ -225,5 +432,40 @@ export const verificarEstructuraTabla = async () => {
   } catch (error) {
     console.error("❌ Error en verificarEstructuraTabla:", error);
     return false;
+  }
+};
+
+// ✅ FUNCIÓN AUXILIAR: Obtener información completa del usuario autenticado
+export const obtenerUsuarioCompleto = async () => {
+  try {
+    const idAuth = await ObtenerIdAuthSupabase();
+    
+    if (!idAuth) {
+      return null;
+    }
+
+    // Obtener usuario con su empresa
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select(`
+        *,
+        asignarempresa!inner(
+          id_empresa,
+          empresa!inner(*)
+        )
+      `)
+      .eq("idauth", idAuth)
+      .single();
+
+    if (error) {
+      console.error("❌ Error obteniendo usuario completo:", error);
+      return null;
+    }
+
+    return data;
+    
+  } catch (error) {
+    console.error("❌ Error en obtenerUsuarioCompleto:", error);
+    return null;
   }
 };

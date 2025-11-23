@@ -15,9 +15,9 @@ function StockInventarioValorado() {
   const { reportInventarioValorado } = useProductosStore();
   const { dataempresa } = useEmpresaStore();
   const { data, isLoading, error } = useQuery({
-    queryKey: ["reporte stock valorado", { _id_empresa: dataempresa?.id }],
-    queryFn: () => reportInventarioValorado({ _id_empresa: dataempresa?.id }),
-    enabled: !!dataempresa,
+    queryKey: ["reporte inventario valorado"],
+    queryFn: () => reportInventarioValorado(), // ← Sin parámetros
+    enabled: true, // ← Siempre habilitado
   });
   if (isLoading) {
     return <span>cargando</span>;

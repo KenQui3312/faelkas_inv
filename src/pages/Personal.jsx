@@ -1,54 +1,86 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEmpresaStore } from "../store/EmpresaStore";
+import { useState, useMemo } from "react";
 import { SpinnerLoader } from "../components/moleculas/SpinnerLoader";
-import { MarcaTemplate } from "../components/templates/MarcaTemplate";
-import { useMarcaStore } from "../store/MarcaStore";
 import { PersonalTemplate } from "../components/templates/PersonalTemplate";
-import { useGlobalStore } from "../store/GlobalStore";
-import { useUsuariosStore } from "../store/UsuariosStore";
-import { usePermisosStore } from "../store/PermisosStore";
-import { BloqueoPagina } from "../components/moleculas/BloqueoPagina";
-// Componente principal para la gestión del Personal
+import { usePermisosStore, BloqueoPagina } from "../index";
+import { MostrarUsuariosTodos, MostrarModulos } from "../index";
+
 export function Personal() {
   // Verificar permisos del usuario para acceder al módulo Personal
   const { datapermisos } = usePermisosStore();
   const statePermiso = datapermisos.some((objeto) =>
-  objeto.modulos.nombre.includes("Personal")
-);
-  // Obtener funciones y datos de usuarios
-  const { mostrarUsuariosTodos, datausuariosTodos } = useUsuariosStore();
-  // Obtener buscador de marcas (posiblemente reutilizado)
-  const { buscador } = useMarcaStore();
-  // Obtener datos de la empresa
-  const { dataempresa } = useEmpresaStore();
-  // Obtener función para mostrar módulos
-  const { mostrarModulos } = useGlobalStore();
+    objeto.modulos.nombre.includes("Personal")
+  );
 
-  //mostrar data
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["mostrar usuarios todos", dataempresa?.id],
-    queryFn: () => mostrarUsuariosTodos({ _id_empresa: dataempresa?.id }),
-    enabled: !!dataempresa,
+  const [buscador, setBuscador] = useState("");
+
+  // ✅ QUERY SIMPLIFICADA: Cargar TODOS los usuarios sin filtro de empresa
+  const { 
+    data: usuarios = [], 
+    isLoading: isLoadingUsuarios, 
+    error: errorUsuarios,
+    refetch: refetchUsuarios 
+  } = useQuery({
+    queryKey: ["usuarios-personal"],
+    queryFn: () => {
+      console.log("🔄 Cargando TODOS los usuarios...");
+      return MostrarUsuariosTodos(); // ✅ Sin parámetros - mostrará todos
+    },
   });
-  //modulos 
-  const { data: modulos } = useQuery({
-    queryKey: ["mostrar modulos"],
-    queryFn: mostrarModulos,
+
+  // ✅ QUERY: Módulos
+  const { 
+    data: modulos = [], 
+    isLoading: isLoadingModulos 
+  } = useQuery({
+    queryKey: ["mostrar-modulos"],
+    queryFn: () => MostrarModulos(),
   });
-    // Bloquear acceso si no tiene permisos
-  if (statePermiso == false) return <BloqueoPagina state={statePermiso}/>;
-  //respuestas
+
+  // ✅ Filtrar usuarios localmente
+  const usuariosFiltrados = useMemo(() => {
+    if (!buscador.trim()) return usuarios;
+    
+    return usuarios.filter(usuario =>
+      usuario.nombres?.toLowerCase().includes(buscador.toLowerCase()) ||
+      usuario.correo?.toLowerCase().includes(buscador.toLowerCase()) ||
+      usuario.nro_doc?.toLowerCase().includes(buscador.toLowerCase()) ||
+      usuario.tipouser?.toLowerCase().includes(buscador.toLowerCase())
+    );
+  }, [buscador, usuarios]);
+
+  // ✅ Estados combinados
+  const isLoading = isLoadingUsuarios || isLoadingModulos;
+
+  // ✅ DEBUG
+  console.log('📊 Usuarios cargados:', usuarios);
+  console.log('🔍 Búsqueda actual:', buscador);
+  console.log('✅ ¿Tiene permisos?:', statePermiso);
+
+  // Bloquear acceso si no tiene permisos
+  if (!statePermiso) {
+    return <BloqueoPagina />;
+  }
+
   if (isLoading) {
     return <SpinnerLoader />;
   }
-  if (error) {
-    return <span>Error...{error.message}</span>;
+
+  if (errorUsuarios) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <span className="text-red-500">Error al cargar los usuarios: {errorUsuarios.message}</span>
+      </div>
+    );
   }
- 
+
   return (
-    <>
-    {/* Renderizar el template de personal con los datos de usuarios */}
-      <PersonalTemplate data={datausuariosTodos} />
-    </>
+    <PersonalTemplate 
+      data={usuariosFiltrados}
+      buscador={buscador}
+      onBuscadorChange={setBuscador}
+      onRecargar={refetchUsuarios}
+      modulos={modulos}
+    />
   );
 }

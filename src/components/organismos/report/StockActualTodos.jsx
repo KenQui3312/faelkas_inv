@@ -13,18 +13,14 @@ import { useQuery } from "@tanstack/react-query";
 
 function StockActualTodos() {
   const { reportStockProductosTodos } = useProductosStore();
-  const { dataempresa } = useEmpresaStore();
+  
+  // QUERY  Sin dependencia de empresa
   const { data, isLoading, error } = useQuery({
-    queryKey: ["reporte stock todos", { id_empresa: dataempresa?.id }],
-    queryFn: () => reportStockProductosTodos({ id_empresa: dataempresa?.id }),
-    enabled: !!dataempresa,
+    queryKey: ["reporte stock todos"],
+    queryFn: () => reportStockProductosTodos(), // ← Sin parámetros
+    enabled: true, // ← Siempre habilitado
   });
-  if (isLoading) {
-    return <span>cargando</span>;
-  }
-  if (error) {
-    return <span>Error {error.message}</span>;
-  }
+
   const styles = StyleSheet.create({
     page: { flexDirection: "row", position: "relative" },
     section: { margin: 10, padding: 10, flexGrow: 1 },
@@ -43,7 +39,6 @@ function StockActualTodos() {
     cell: {
       flex: 1,
       textAlign: "center",
-
       borderLeftColor: "#000",
       justifyContent: "flex-start",
       alignItems: "center",
@@ -52,14 +47,15 @@ function StockActualTodos() {
       flex: 1,
       backgroundColor: "#dcdcdc",
       fontWeight: "bold",
-
       textAlign: "left",
       justifyContent: "flex-start",
       alignItems: "center",
     },
   });
+
   const currentDate = new Date();
   const formattedDate = `${currentDate.toLocaleDateString()} ${currentDate.toLocaleTimeString()}`;
+  
   const renderTableRow = (rowData, isHeader = false) => (
     <View style={styles.row} key={rowData.id}>
       <Text style={[styles.cell, isHeader && styles.headerCell]}>
@@ -68,8 +64,20 @@ function StockActualTodos() {
       <Text style={[styles.cell, isHeader && styles.headerCell]}>
         {rowData.stock}
       </Text>
+      {/* ✅ AGREGAR COLUMNA DE EMPRESA */}
+      {!isHeader && (
+        <Text style={[styles.cell, isHeader && styles.headerCell]}>
+          {rowData.nombre_empresa || `Empresa ${rowData.id_empresa}`}
+        </Text>
+      )}
+      {isHeader && (
+        <Text style={[styles.cell, isHeader && styles.headerCell]}>
+          Empresa
+        </Text>
+      )}
     </View>
   );
+
   return (
     <Container>
       <PDFViewer className="pdfviewer">
@@ -84,9 +92,10 @@ function StockActualTodos() {
                     marginBottom: 10,
                   }}
                 >
-                  Stock actual todos
+                  Stock actual - TODAS LAS EMPRESAS
                 </Text>
                 <Text>Fecha y hora del reporte: {formattedDate}</Text>
+                <Text>Total de productos: {data?.length || 0}</Text>
                 <View style={styles.table}>
                   {renderTableRow(
                     {
@@ -102,10 +111,10 @@ function StockActualTodos() {
           </Page>
         </Document>
       </PDFViewer>
-     
     </Container>
   );
 }
+
 const Container = styled.div`
   width: 100%;
   height: 80vh;
@@ -114,4 +123,5 @@ const Container = styled.div`
     height: 100%;
   }
 `;
+
 export default StockActualTodos;

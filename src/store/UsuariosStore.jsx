@@ -84,103 +84,103 @@ export const useUsuariosStore = create((set, get) => ({
     }
   },
 
- // En insertarUsuarioAdmin
+  // ✅ CORREGIDO: insertarUsuarioAdmin
   insertarUsuarioAdmin: async (p) => {
-  try {
-    console.log('🔵 [1/3] Iniciando registro para:', p.correo);
-    
-    // ✅ 1. Registrar en Auth de Supabase
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: p.correo.toLowerCase().trim(),
-      password: p.pass,
-      options: {
-        data: {
-          tipouser: p.tipouser,
+    try {
+      console.log('🔵 [1/3] Iniciando registro para:', p.correo);
+      
+      // ✅ 1. Registrar en Auth de Supabase
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: p.correo.toLowerCase().trim(),
+        password: p.pass,
+        options: {
+          data: {
+            tipouser: p.tipouser,
+          }
         }
-      }
-    });
-
-    if (signUpError) throw new Error(`Error en Auth: ${signUpError.message}`);
-    if (!signUpData.user) throw new Error('No se pudo crear el usuario en Auth');
-
-    console.log('✅ [1/3] Usuario creado en Auth:', signUpData.user.id);
-
-    // ✅ 2. Insertar en tabla usuarios - SOLO campos necesarios, SIN id
-    console.log('🔵 [2/3] Insertando en tabla usuarios...');
-    
-    const datosUsuario = {
-      idauth: signUpData.user.id,
-      correo: p.correo,
-      fecharegistro: new Date().toISOString(),
-      tipouser: p.tipouser,
-      estado: "activo"
-      // ✅ NO incluir campo 'id' - se generará automáticamente
-    };
-    
-    console.log('🔵 Datos para insertar (SIN ID):', datosUsuario);
-    
-    const userData = await InsertarUsuarios(datosUsuario);
-    console.log('✅ [2/3] Usuario insertado en tabla:', userData);
-
-    console.log('✅ [3/3] Registro completo exitoso');
-    return signUpData.user;
-
-  } catch (error) {
-    console.error('❌ Error completo en insertarUsuarioAdmin:', error);
-    throw error;
-  }
-},
-
-  insertarUsuarios: async (p) => {
-  try {
-    console.log("🟡 InsertarUsuarios - Parametros recibidos:", p);
-    
-    // ✅ CREAR un nuevo objeto SIN el campo id
-    const datosParaInsertar = {
-      idauth: p.idauth,
-      correo: p.correo,
-      fecharegistro: p.fecharegistro,
-      tipouser: p.tipouser,
-      estado: p.estado,
-      nombres: p.nombres || null,
-      nro_doc: p.nro_doc || null,
-      telefono: p.telefono || null,
-      direccion: p.direccion || null,
-      tipodoc: p.tipodoc || null
-      // ✅ NO incluir el campo 'id' - se generará automáticamente
-    };
-    
-    console.log("🟡 Datos para insertar (SIN ID):", datosParaInsertar);
-    
-    const { data, error } = await supabase
-      .from("usuarios")
-      .insert([datosParaInsertar])
-      .select()
-      .single();
-
-    console.log("🟡 InsertarUsuarios - Respuesta:", { data, error });
-
-    if (error) {
-      console.error("❌ Error insertando usuario:", {
-        code: error.code,
-        message: error.message,
-        details: error.details
       });
+
+      if (signUpError) throw new Error(`Error en Auth: ${signUpError.message}`);
+      if (!signUpData.user) throw new Error('No se pudo crear el usuario en Auth');
+
+      console.log('✅ [1/3] Usuario creado en Auth:', signUpData.user.id);
+
+      // ✅ 2. Insertar en tabla usuarios - SOLO campos necesarios, SIN id
+      console.log('🔵 [2/3] Insertando en tabla usuarios...');
+      
+      const datosUsuario = {
+        idauth: signUpData.user.id,
+        correo: p.correo,
+        fecharegistro: new Date().toISOString(),
+        tipouser: p.tipouser,
+        estado: "activo"
+        // ✅ NO incluir campo 'id' - se generará automáticamente
+      };
+      
+      console.log('🔵 Datos para insertar (SIN ID):', datosUsuario);
+      
+      const userData = await InsertarUsuarios(datosUsuario);
+      console.log('✅ [2/3] Usuario insertado en tabla:', userData);
+
+      console.log('✅ [3/3] Registro completo exitoso');
+      return signUpData.user;
+
+    } catch (error) {
+      console.error('❌ Error completo en insertarUsuarioAdmin:', error);
       throw error;
     }
+  },
 
-    if (data) {
-      console.log("✅ Usuario insertado correctamente:", data);
-      return data;
+  insertarUsuarios: async (p) => {
+    try {
+      console.log("🟡 InsertarUsuarios - Parametros recibidos:", p);
+      
+      // ✅ CREAR un nuevo objeto SIN el campo id
+      const datosParaInsertar = {
+        idauth: p.idauth,
+        correo: p.correo,
+        fecharegistro: p.fecharegistro,
+        tipouser: p.tipouser,
+        estado: p.estado,
+        nombres: p.nombres || null,
+        nro_doc: p.nro_doc || null,
+        telefono: p.telefono || null,
+        direccion: p.direccion || null,
+        tipodoc: p.tipodoc || null
+        // ✅ NO incluir el campo 'id' - se generará automáticamente
+      };
+      
+      console.log("🟡 Datos para insertar (SIN ID):", datosParaInsertar);
+      
+      const { data, error } = await supabase
+        .from("usuarios")
+        .insert([datosParaInsertar])
+        .select()
+        .single();
+
+      console.log("🟡 InsertarUsuarios - Respuesta:", { data, error });
+
+      if (error) {
+        console.error("❌ Error insertando usuario:", {
+          code: error.code,
+          message: error.message,
+          details: error.details
+        });
+        throw error;
+      }
+
+      if (data) {
+        console.log("✅ Usuario insertado correctamente:", data);
+        return data;
+      }
+
+      throw new Error('No se recibió data del usuario insertado');
+
+    } catch (error) {
+      console.error("❌ Error en InsertarUsuarios:", error);
+      throw error;
     }
-
-    throw new Error('No se recibió data del usuario insertado');
-
-  } catch (error) {
-    console.error("❌ Error en InsertarUsuarios:", error);
-    throw error;
-  }
-},
+  },
 
   // ✅ FUNCIÓN MEJORADA: testSupabaseConnection
   testSupabaseConnection: async () => {

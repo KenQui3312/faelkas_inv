@@ -15,10 +15,10 @@ export const useMarcaStore = create((set, get) => ({
   marcaItemSelect: [],
   parametros: {},
   mostrarMarca: async (p) => {
-    const response = await MostrarMarca(p);
-    set({ parametros: p });
+    // Si no hay parámetros, mostrar todas las marcas
+    const params = p?.id_empresa ? { id_empresa: p.id_empresa } : {};
+    const response = await MostrarMarca(params);
     set({ datamarca: response });
-    set({ marcaItemSelect:response[0] });
     return response;
   },
   selectMarca: (p) => {

@@ -16,16 +16,24 @@ export async function InsertarCategorias(p) {
   }
  
 }
-export async function MostrarCategorias(p) {
+
+export async function MostrarCategorias(p = {}) {
   try {
-    const { data } = await supabase
-      .from("categorias")
-      .select()
-      .eq("id_empresa", p.idempresa)
-      .order("id", { ascending: true });
-    return data;
-  } catch (error) {}
+    console.log('🔍 Mostrando TODAS las categorías...');
+    
+    const { data, error } = await supabase
+      .from('categorias')
+      .select('*')
+      .order('descripcion');
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error:', error);
+    return [];
+  }
 }
+
 export async function EliminarCategorias(p) {
   try {
     const { error } = await supabase

@@ -2,6 +2,7 @@ import { supabase } from "../index";
 import Swal from "sweetalert2";
 // Nombre de la tabla en la base de datos
 const tabla = "productos";
+
 // Función para insertar nuevos productos
 export async function InsertarProductos(p) {
   try {
@@ -22,16 +23,101 @@ export async function InsertarProductos(p) {
     throw error
   }
 }
+
 // Función para obtener todos los productos de una empresa
+/*
 export async function MostrarProductos(p) {
   try {
-    // Llamar a la función RPC de Supabase para mostrar productos
-    const { data } = await supabase.rpc("mostrarproductos", {
-      _id_empresa: p._id_empresa,
-    });
+    console.log('🔍 Mostrando TODOS los productos (sin filtro)...');
+    
+    // ✅ TEMPORAL: Mostrar todos los productos sin filtrar por empresa
+    const { data, error } = await supabase
+      .from('productos')
+      .select(`
+        *,
+        marca:idmarca(descripcion),
+        categorias:id_categoria(descripcion, color)
+      `)
+      .order('id');
+    
+    if (error) throw error;
+    
+    console.log('📦 TODOS los productos:', data);
     return data;
-  } catch (error) {}
+    
+  } catch (error) {
+    console.error('Error:', error);
+    return [];
+  }
+}*/
+/*
+export async function MostrarProductos(p) {
+  try {
+    console.log('🔍 Mostrando TODOS los productos (sin filtro)...');
+    const { data, error } = await supabase
+      .from('productos')
+      .select(`
+        *,
+        marca:idmarca(descripcion),
+        categorias:id_categoria(descripcion, color),
+        empresa:empresa(nombre)
+      `)
+      .order('id_empresa')
+      .order('descripcion');
+    if (error) throw error;
+    console.log('📦 TODOS los productos con relaciones:', data);
+    return data;
+  } catch (error) {
+    console.error('Error:', error);
+    return [];
+  }
+}*/
+export async function MostrarProductos(p) {
+  try {
+    console.log('🔍 Mostrando TODOS los productos (con relaciones completas)...');
+    
+    const { data, error } = await supabase
+      .from('productos')
+      .select(`
+        id,
+        descripcion,
+        stock,
+        stock_minimo,
+        codigobarras,
+        codigointerno,
+        precioventa,
+        preciocompra,
+        id_empresa,
+        id_categoria,
+        idmarca,
+        categorias: id_categoria (
+          id,
+          descripcion,
+          color
+        ),
+        marca: idmarca (
+          id,
+          descripcion
+        ),
+        empresa: empresa (
+          id,
+          nombre
+        )
+      `)
+      .order('id_empresa')
+      .order('descripcion');
+    
+    if (error) throw error;
+    
+    console.log('📦 Productos con relaciones completas:', data);
+    return data;
+    
+  } catch (error) {
+    console.error('Error:', error);
+    return [];
+  }
 }
+
 // Función para eliminar un producto específico por ID
 export async function EliminarProductos(p) {
   try {
@@ -46,6 +132,7 @@ export async function EliminarProductos(p) {
     alert(error.error_description || error.message + " eliminar productos");
   }
 }
+
 // Función para editar un producto existente
 export async function EditarProductos(p) {
   try {
@@ -60,60 +147,114 @@ export async function EditarProductos(p) {
     alert(error.error_description || error.message + " editar categorias");
   }
 }
+
 // Función para buscar productos por descripción
 export async function BuscarProductos(p) {
   try {
-    // Llamar a la función RPC de Supabase para buscar productos
-    const { data } = await supabase.rpc("buscarproductos", {
-      _id_empresa: p.id_empresa,
-      buscador: p.descripcion,
+    console.log("🔍 Buscando productos GLOBAL...", p);
+    
+    const { data, error } = await supabase.rpc("buscarproductos", {
+      buscador: p.descripcion || '', // Solo el buscador, sin id_empresa
     });
-    return data;
-  } catch (error) {}
+    
+    if (error) {
+      console.error("❌ Error en BuscarProductos:", error);
+      return [];
+    }
+    
+    console.log("✅ Productos encontrados (TODAS las empresas):", data?.length || 0, "registros");
+    return data || [];
+  } catch (error) {
+    console.error("💥 Error general en BuscarProductos:", error);
+    return [];
+  }
 }
+
 //REPORTES
-// Reporte: Obtener todos los productos de una empresa
-export async function ReportStockProductosTodos(p) {
-  const { data, error } = await supabase
-    .from(tabla)
-    .select()
-    .eq("id_empresa", p.id_empresa);
-  if (error) {
-    return;
+
+// ✅ REPORTE CORREGIDO: Obtener todos los productos (GLOBAL)
+export async function ReportStockProductosTodos() {
+  try {
+    console.log("🔍 Ejecutando ReportStockProductosTodos GLOBAL");
+    
+    const { data, error } = await supabase
+      .from(tabla)
+      .select(`
+        *,
+        empresa:empresa(nombre)
+      `)
+      .order('id_empresa')
+      .order('descripcion');
+    
+    if (error) {
+      console.error("❌ Error en ReportStockProductosTodos:", error);
+      return [];
+    }
+    
+    // Formatear datos para incluir nombre de empresa
+    const formattedData = data?.map(item => ({
+      ...item,
+      nombre_empresa: item.empresa?.nombre || `Empresa ${item.id_empresa}`
+    }));
+    
+    console.log("✅ Productos obtenidos (TODAS las empresas):", formattedData?.length || 0);
+    return formattedData || [];
+  } catch (error) {
+    console.error("💥 Error general en ReportStockProductosTodos:", error);
+    return [];
   }
-  return data;
 }
-// Reporte: Obtener un producto específico por ID
+
+// ✅ REPORTE CORREGIDO: Obtener un producto específico por ID (GLOBAL)
 export async function ReportStockXProducto(p) {
-  const { data, error } = await supabase
-    .from(tabla)
-    .select()
-    .eq("id_empresa", p.id_empresa)
-    .eq("id",p.id);
-  if (error) {
-    return;
+  try {
+    // Verificar que tenemos al menos el ID
+    if (!p?.id) {
+      console.error("❌ ID faltante en ReportStockXProducto:", p);
+      return [];
+    }
+    
+    console.log("🔍 Ejecutando ReportStockXProducto GLOBAL:", p);
+    
+    // Buscar en TODAS las empresas, ignorar id_empresa si se pasa
+    const { data, error } = await supabase
+      .from(tabla)
+      .select()
+      .eq("id", p.id); // ← Solo filtrar por ID, no por empresa
+    
+    if (error) {
+      console.error("❌ Error en ReportStockXProducto:", error);
+      return [];
+    }
+    
+    console.log("✅ Producto específico encontrado:", data?.length || 0);
+    return data || [];
+  } catch (error) {
+    console.error("💥 Error general en ReportStockXProducto:", error);
+    return [];
   }
-  return data;
 }
+
 // Reporte: Obtener productos bajo el stock mínimo
 export async function ReportStockBajoMinimo(p) {
   try {
-    console.log("🔍 Ejecutando reporte GLOBAL (ignorando filtro de empresa)");
+    console.log("🔍 Ejecutando reporte GLOBAL con función RPC");
     
     const { data, error } = await supabase.rpc("reportproductosbajominimo");
     
     if (error) {
       console.error("Error en reporte productos bajo mínimo:", error);
-      return;
+      return [];
     }
     
-    console.log("📊 TODOS los productos bajo mínimo:", data);
-    return data; // ← Siempre retorna TODOS, ignora el filtro
+    console.log("📊 TODOS los productos bajo mínimo:", data?.length || 0);
+    return data || [];
   } catch (error) {
     console.error("Error general en ReportStockBajoMinimo:", error);
     return [];
   }
 }
+
 // Reporte: Obtener movimientos de kardex (entradas y salidas)
 export async function ReportKardexEntradaSalida(p) {
   const { data, error } = await supabase.rpc("mostrarkardexempresa",p)
@@ -122,13 +263,48 @@ export async function ReportKardexEntradaSalida(p) {
   }
   return data;
 }
+
 // Reporte: Obtener inventario valorado (con valores monetarios)
+/*
 export async function ReportInventarioValorado(p) {
   const { data, error } = await supabase.rpc("inventariovalorado",p)
   
   if (error) {
-   
     return;
   }
   return data;
+}
+*/
+// Reporte: Obtener inventario valorado (GLOBAL)
+export async function ReportInventarioValorado() {
+  try {
+    console.log("🔍 Ejecutando ReportInventarioValorado GLOBAL");
+    
+    const { data, error } = await supabase
+      .from("productos")
+      .select(`
+        *,
+        empresa:empresa(nombre)
+      `)
+      .order('id_empresa')
+      .order('descripcion');
+    
+    if (error) {
+      console.error("❌ Error en ReportInventarioValorado:", error);
+      return [];
+    }
+    
+    // Calcular total para cada producto
+    const formattedData = data?.map(item => ({
+      ...item,
+      total: (item.stock * item.preciocompra) || 0,
+      nombre_empresa: item.empresa?.nombre || `Empresa ${item.id_empresa}`
+    }));
+    
+    console.log("✅ Inventario valorado obtenido (TODAS las empresas):", formattedData?.length || 0);
+    return formattedData || [];
+  } catch (error) {
+    console.error("💥 Error general en ReportInventarioValorado:", error);
+    return [];
+  }
 }

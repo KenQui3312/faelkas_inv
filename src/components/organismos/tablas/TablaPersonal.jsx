@@ -1,7 +1,6 @@
 import styled from "styled-components";
 import {
   ContentAccionesTabla,
-  useCategoriasStore,
   Paginacion,
 } from "../../../index";
 import Swal from "sweetalert2";
@@ -16,20 +15,30 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { FaArrowsAltV } from "react-icons/fa";
+
 export function TablaPersonal({
   data,
-  SetopenRegistro,
-  setdataSelect,
-  setAccion,
+  onEditar,
+  onRecargar
 }) {
-  if (data?.length == 0) return;
+  // ✅ Si no hay datos, mostrar mensaje
+  if (!data || data.length === 0) {
+    return (
+      <Container>
+        <div className="text-center py-8 text-gray-500">
+          No hay personal para mostrar
+        </div>
+      </Container>
+    );
+  }
+
   const [pagina, setPagina] = useState(1);
   const [datas, setData] = useState(data);
   const [columnFilters, setColumnFilters] = useState([]);
 
-  const { eliminarCategoria } = useCategoriasStore();
-  function eliminar(p) {
-    Swal.fire({
+  // ✅ Función para eliminar personal
+  const eliminar = async (id) => {
+    const result = await Swal.fire({
       title: "¿Estás seguro(a)(e)?",
       text: "Una vez eliminado, ¡no podrá recuperar este registro!",
       icon: "warning",
@@ -37,84 +46,117 @@ export function TablaPersonal({
       confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
       confirmButtonText: "Si, eliminar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        console.log(p);
-        await eliminarCategoria({ id: p });
-      }
     });
-  }
-  function editar(data) {
-    SetopenRegistro(true);
-    setdataSelect(data);
-    setAccion("Editar");
-  }
+
+    if (result.isConfirmed) {
+      try {
+        // ✅ Importar función de eliminar personal
+        const { EliminarUsuario } = await import("../../../index");
+        await EliminarUsuario({ id });
+        
+        Swal.fire({
+          title: "¡Eliminado!",
+          text: "El personal ha sido eliminado.",
+          icon: "success",
+          timer: 2000,
+          showConfirmButton: false
+        });
+
+        // ✅ Recargar datos después de eliminar
+        if (onRecargar) {
+          onRecargar();
+        }
+      } catch (error) {
+        console.error("Error al eliminar personal:", error);
+        Swal.fire({
+          title: "Error",
+          text: "No se pudo eliminar el personal",
+          icon: "error",
+        });
+      }
+    }
+  };
+
+  // ✅ Función para editar - usa la prop onEditar
+  const editar = (data) => {
+    if (onEditar) {
+      onEditar(data);
+    }
+  };
+
   const columns = [
     {
       accessorKey: "nombres",
       header: "Nombres",
       cell: (info) => <span>{info.getValue()}</span>,
-      enableColumnFilter: true,
-      filterFn: (row, columnId, filterStatuses) => {
-        if (filterStatuses.length === 0) return true;
-        const status = row.getValue(columnId);
-        return filterStatuses.includes(status?.id);
-      },
+    },
+    {
+      accessorKey: "correo",
+      header: "Email",
+      cell: (info) => (
+        <span className="ContentCell" data-title="Email">
+          {info.getValue()}
+        </span>
+      ),
     },
     {
       accessorKey: "tipouser",
       header: "Tipo usuario",
       enableSorting: false,
       cell: (info) => (
-        <td data-title="Stock" className="ContentCell">
-          <span>{info.getValue()}</span>
-        </td>
+        // ✅ CORREGIDO: Solo span, sin td
+        <span className="ContentCell" data-title="Tipo usuario">
+          {info.getValue()}
+        </span>
       ),
-      enableColumnFilter: true,
-      filterFn: (row, columnId, filterStatuses) => {
-        if (filterStatuses.length === 0) return true;
-        const status = row.getValue(columnId);
-        return filterStatuses.includes(status?.id);
-      },
     },
     {
       accessorKey: "estado",
       header: "Estado",
       enableSorting: false,
       cell: (info) => (
-        <td data-title="Stock" className="ContentCell">
-          <span>{info.getValue()}</span>
-        </td>
+        // ✅ CORREGIDO: Solo span, sin td
+        <span className="ContentCell" data-title="Estado">
+          {info.getValue()}
+        </span>
       ),
-      enableColumnFilter: true,
-      filterFn: (row, columnId, filterStatuses) => {
-        if (filterStatuses.length === 0) return true;
-        const status = row.getValue(columnId);
-        return filterStatuses.includes(status?.id);
-      },
     },
-
-    
     {
-      accessorKey: "acciones",
-      header: "",
+      accessorKey: "nro_doc",
+      header: "Documento",
       enableSorting: false,
       cell: (info) => (
-        <td data-title="Acciones" className="ContentCell">
+        <span className="ContentCell" data-title="Documento">
+          {info.getValue()}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "telefono",
+      header: "Teléfono",
+      enableSorting: false,
+      cell: (info) => (
+        <span className="ContentCell" data-title="Teléfono">
+          {info.getValue()}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "acciones",
+      header: "Acciones",
+      enableSorting: false,
+      cell: (info) => (
+        // ✅ CORREGIDO: Solo div, sin td
+        <div className="ContentCell" data-title="Acciones">
           <ContentAccionesTabla
             funcionEditar={() => editar(info.row.original)}
             funcionEliminar={() => eliminar(info.row.original.id)}
           />
-        </td>
+        </div>
       ),
-      enableColumnFilter: true,
-      filterFn: (row, columnId, filterStatuses) => {
-        if (filterStatuses.length === 0) return true;
-        const status = row.getValue(columnId);
-        return filterStatuses.includes(status?.id);
-      },
     },
   ];
+
   const table = useReactTable({
     data,
     columns,
@@ -140,83 +182,75 @@ export function TablaPersonal({
         ),
     },
   });
+
   return (
-    <>
-      <Container>
-        <table className="responsive-table">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th key={header.id}>
-                    {header.column.columnDef.header}
-                    {header.column.getCanSort() && (
-                      <span
-                        style={{ cursor: "pointer" }}
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        <FaArrowsAltV />
-                      </span>
-                    )}
+    <Container>
+      <table className="responsive-table">
+        <thead>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <th key={header.id}>
+                  {header.column.columnDef.header}
+                  {header.column.getCanSort() && (
+                    <span
+                      style={{ cursor: "pointer" }}
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
+                      <FaArrowsAltV />
+                    </span>
+                  )}
+                  {
                     {
-                      {
-                        asc: " 🔼",
-                        desc: " 🔽",
-                      }[header.column.getIsSorted()]
-                    }
-                    <div
-                      onMouseDown={header.getResizeHandler()}
-                      onTouchStart={header.getResizeHandler()}
-                      className={`resizer ${
-                        header.column.getIsResizing() ? "isResizing" : ""
-                      }`}
-                    />
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map(item=>(
-              
-                <tr key={item.id}>
-                  {item.getVisibleCells().map(cell => (
-                  
-                      <td key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
-                    
-                  ))}
-                </tr>
-             
-            ))}
-          </tbody>
-        </table>
-        <Paginacion
-          table={table}
-          irinicio={() => table.setPageIndex(0)}
-          pagina={table.getState().pagination.pageIndex + 1}
-          setPagina={setPagina}
-          maximo={table.getPageCount()}
-        />
-      </Container>
-    </>
+                      asc: " 🔼",
+                      desc: " 🔽",
+                    }[header.column.getIsSorted()]
+                  }
+                  <div
+                    onMouseDown={header.getResizeHandler()}
+                    onTouchStart={header.getResizeHandler()}
+                    className={`resizer ${
+                      header.column.getIsResizing() ? "isResizing" : ""
+                    }`}
+                  />
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map((item) => (
+            <tr key={item.id}>
+              {item.getVisibleCells().map((cell) => (
+                <td key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <Paginacion
+        table={table}
+        irinicio={() => table.setPageIndex(0)}
+        pagina={table.getState().pagination.pageIndex + 1}
+        setPagina={setPagina}
+        maximo={table.getPageCount()}
+      />
+    </Container>
   );
 }
+
 const Container = styled.div`
   position: relative;
-
   margin: 5% 3%;
   @media (min-width: ${v.bpbart}) {
     margin: 2%;
   }
   @media (min-width: ${v.bphomer}) {
     margin: 2em auto;
-    /* max-width: ${v.bphomer}; */
   }
+
   .responsive-table {
     width: 100%;
     margin-bottom: 1.5em;
@@ -227,9 +261,9 @@ const Container = styled.div`
     @media (min-width: ${v.bpmarge}) {
       font-size: 1em;
     }
+
     thead {
       position: absolute;
-
       padding: 0;
       border: 0;
       height: 1px;
@@ -251,6 +285,7 @@ const Container = styled.div`
         }
       }
     }
+
     tbody,
     tr,
     th,
@@ -260,6 +295,7 @@ const Container = styled.div`
       text-align: left;
       white-space: normal;
     }
+    
     tr {
       @media (min-width: ${v.bpbart}) {
         display: table-row;
@@ -284,10 +320,12 @@ const Container = styled.div`
         padding: 0.75em;
       }
     }
+
     tbody {
       @media (min-width: ${v.bpbart}) {
         display: table-row-group;
       }
+      
       tr {
         margin-bottom: 1em;
         @media (min-width: ${v.bpbart}) {
@@ -303,29 +341,20 @@ const Container = styled.div`
           }
         }
       }
-      th[scope="row"] {
-        @media (min-width: ${v.bplisa}) {
-          border-bottom: 1px solid rgba(161, 161, 161, 0.32);
-        }
-        @media (min-width: ${v.bpbart}) {
-          background-color: transparent;
-          text-align: center;
-          color: ${({ theme }) => theme.text};
-        }
-      }
+
       .ContentCell {
         text-align: right;
         display: flex;
         justify-content: space-between;
         align-items: center;
         height: 50px;
-
         border-bottom: 1px solid rgba(161, 161, 161, 0.32);
         @media (min-width: ${v.bpbart}) {
           justify-content: center;
           border-bottom: none;
         }
       }
+
       td {
         text-align: right;
         @media (min-width: ${v.bpbart}) {
@@ -333,6 +362,7 @@ const Container = styled.div`
           text-align: center;
         }
       }
+
       td[data-title]:before {
         content: attr(data-title);
         float: left;
@@ -346,13 +376,4 @@ const Container = styled.div`
       }
     }
   }
-`;
-const Colorcontent = styled.div`
-  justify-content: center;
-  min-height: ${(props) => props.$alto};
-  width: ${(props) => props.$ancho};
-  display: flex;
-  background-color: ${(props) => props.color};
-  border-radius: 50%;
-  text-align: center;
 `;

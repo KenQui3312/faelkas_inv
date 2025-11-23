@@ -10,22 +10,22 @@ import {
 } from "@react-pdf/renderer";
 import { useEmpresaStore, useProductosStore } from "../../../index";
 import { useQuery } from "@tanstack/react-query";
+
 // Componente para generar reporte PDF de productos con stock bajo mínimo
 function StockBajoMinimo() {
   // Obtener funciones y datos de los stores
   const { reportBajoMinimo } = useProductosStore();
-  const { dataempresa } = useEmpresaStore();
   
-  console.log("🏢 Empresa actual:", dataempresa);
+  console.log("🏢 Reporte GLOBAL - Sin filtro por empresa");
 
-  // Query para obtener datos del reporte de stock bajo mínimo
+  // ✅ QUERY CORREGIDA - Sin dependencia de empresa
   const { data, isLoading, error } = useQuery({
-    queryKey: ["reporte stock bajo minimo", { id_empresa: dataempresa?.id }],
+    queryKey: ["reporte stock bajo minimo"],
     queryFn: () => {
-      console.log("🔍 Ejecutando query con empresa:", dataempresa?.id);
-      return reportBajoMinimo({ id_empresa: dataempresa?.id });
+      console.log("🔍 Ejecutando query GLOBAL (sin empresa)");
+      return reportBajoMinimo(); // ← Sin parámetros
     },
-    enabled: !!dataempresa,
+    enabled: true, // ← Siempre habilitado
     onSuccess: (data) => {
       console.log("✅ Datos recibidos:", data);
       console.log("📊 Cantidad de productos bajo mínimo:", data?.length);
@@ -97,6 +97,17 @@ function StockBajoMinimo() {
       <Text style={[styles.cell, isHeader && styles.headerCell]}>
         {rowData.stock_minimo}
       </Text>
+      {/* ✅ AGREGAR COLUMNA DE EMPRESA */}
+      {!isHeader && (
+        <Text style={[styles.cell, isHeader && styles.headerCell]}>
+          {rowData.nombre_empresa || `Empresa ${rowData.id_empresa}`}
+        </Text>
+      )}
+      {isHeader && (
+        <Text style={[styles.cell, isHeader && styles.headerCell]}>
+          Empresa
+        </Text>
+      )}
     </View>
   );
   
@@ -104,7 +115,7 @@ function StockBajoMinimo() {
     <Container>
       {/* Visor del documento PDF */}
       <PDFViewer className="pdfviewer">
-        <Document title="Reporte de stock todos">
+        <Document title="Reporte de stock bajo mínimo">
           <Page size="A4" orientation="portrait">
             <View style={styles.page}>
               <View style={styles.section}>
@@ -115,15 +126,16 @@ function StockBajoMinimo() {
                     marginBottom: 10,
                   }}
                 >
-                  Stock bajo minimo
+                  Stock bajo mínimo - TODAS LAS EMPRESAS
                 </Text>
                 <Text>Fecha y hora del reporte: {formattedDate}</Text>
+                <Text>Total de productos bajo mínimo: {data?.length || 0}</Text>
                 <View style={styles.table}>
                   {renderTableRow(
                     {
                       descripcion: "Producto",
                       stock: "Stock",
-                      stock_minimo: "Stock Minimo"
+                      stock_minimo: "Stock Mínimo"
                     },
                     true
                   )}
