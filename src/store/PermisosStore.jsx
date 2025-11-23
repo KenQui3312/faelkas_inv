@@ -9,13 +9,19 @@ import {
   MostrarPermisos,
 } from "../index";
 import { DataModulosConfiguracion } from "../utils/dataEstatica";
+
+// Store para gestion de permisos de usuarios
 export const usePermisosStore = create((set, get) => ({
   datapermisos: [],
   datapermisosEdit: [],
+  
+  // Obtener permisos y actualizar estado de modulos
   mostrarPermisos: async (p) => {
     const response = await MostrarPermisos(p);
     set({ datapermisos: response });
     let allDocs = [];
+    
+    // Verificar estado de cada modulo segun permisos
     DataModulosConfiguracion.map((element) => {
       const statePermiso = response.some((objeto) =>
         objeto.modulos.nombre.includes(element.title)
@@ -28,6 +34,7 @@ export const usePermisosStore = create((set, get) => ({
       }
     });
 
+    // Actualizar modulos de configuracion con estados
     DataModulosConfiguracion.splice(0, DataModulosConfiguracion.length);
     DataModulosConfiguracion.push(...allDocs)
     console.log("agergando",allDocs)
@@ -48,6 +55,8 @@ export const usePermisosStore = create((set, get) => ({
     // });
     return response;
   },
+  
+  // Obtener permisos para edicion
   mostrarPermisosEdit: async (p) => {
     const response = await MostrarPermisos(p);
     set({ datapermisosEdit: response });

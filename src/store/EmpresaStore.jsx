@@ -10,14 +10,15 @@ export const useEmpresaStore = create((set, get) => ({
   contadorusuarios: [],
   dataempresa: [],
   
-   mostrarEmpresa: async (p) => {
+  // Obtener datos de la empresa
+  mostrarEmpresa: async (p) => {
     try {
       const response = await MostrarEmpresa(p);
       console.log("🔄 MostrarEmpresa response:", response);
       console.log("📦 Tipo de response:", typeof response);
       console.log("🔍 Es array?", Array.isArray(response));
       
-      // ✅ Si response es un objeto individual, guárdalo como tal
+      // Si response es un objeto individual, guárdalo como tal
       set({ dataempresa: response });
       return response;
     } catch (error) {
@@ -27,9 +28,10 @@ export const useEmpresaStore = create((set, get) => ({
     }
   },
   
+  // Contar usuarios por empresa
   contarusuariosXempresa: async (p) => {
     try {
-      // ✅ Verificar que p y p.id_empresa existan
+      // Verificar que p y p.id_empresa existan
       if (!p?.id_empresa) {
         console.warn("⚠️ No se proporcionó id_empresa para contar usuarios");
         set({ contadorusuarios: [] });
