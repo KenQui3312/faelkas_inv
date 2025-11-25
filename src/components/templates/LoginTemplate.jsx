@@ -17,7 +17,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import carrito from "../../assets/carrito.svg";
+import logcomplet from "../../assets/logocomplet.svg";
 import logo from "../../assets/inventarioslogo.png";
 import { MdOutlineInfo } from "react-icons/md";
 import { ThemeContext } from "../../App";
@@ -73,7 +73,7 @@ export function LoginTemplate() {
         <span>FAELKAS_inv</span>
       </div>
       <div className="bannerlateral">
-        <img src={carrito}></img>
+        <img src={logcomplet}></img>
       </div>
 
       <div className="contentCard">
@@ -118,7 +118,7 @@ export function LoginTemplate() {
               {errors.pass?.type === "required" && <p>Campo requerido</p>}
             </InputText>
             <ContainerBtn>
-              <Btnsave titulo="Iniciar" bgcolor="#fc6b32" />
+              <Btnsave titulo="Iniciar" bgcolor="#E06666" />
               <Btnsave
                 funcion={() => setState(!state)}
                 titulo="Crear cuenta"
@@ -171,7 +171,7 @@ const Container = styled.div`
   }
 
   .bannerlateral {
-    background-color: #fc6b32;
+    background-color: #E06666; 
     height: 100vh;
     display: flex;
     align-items: center;
@@ -227,7 +227,7 @@ const Container = styled.div`
     }
     
     .frase {
-      color: #fc6c32;
+      color: #E06666; 
       font-size: 1.5rem;
       font-weight: 700;
       margin-bottom: 30px;

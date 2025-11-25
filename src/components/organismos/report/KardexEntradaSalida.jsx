@@ -41,12 +41,6 @@ function KardexEntradaSalida() {
     enabled: !!dataempresa,
   });
 
-  // if (isLoading) {
-  //   return <span>cargando</span>;
-  // }
-  // if (error) {
-  //   return <span>Error {error.message}</span>;
-  // }
   const styles = StyleSheet.create({
     page: { flexDirection: "row", position: "relative" },
     section: { margin: 10, padding: 10, flexGrow: 1 },
@@ -107,20 +101,6 @@ function KardexEntradaSalida() {
   );
   return (
     <Container>
-      <Buscador
-        funcion={() => setstateListaProductos(!stateListaproductos)}
-        setBuscador={setBuscador}
-      />
-      {stateListaproductos && (
-        <ListaGenerica funcion={(p)=>{
-          selectProductos(p)
-          setBuscador("")
-        }}
-          setState={() => setstateListaProductos(!stateListaproductos)}
-          data={dataproductosbuscador}
-        />
-      )}
-
       <PDFViewer className="pdfviewer">
         <Document title="Reporte de stock todos">
           <Page size="A4" orientation="landscape">
@@ -133,7 +113,7 @@ function KardexEntradaSalida() {
                     marginBottom: 10,
                   }}
                 >
-                   Kardex - entrada y salida por producto
+                  Reporte de Kardex - entrada y salida
                 </Text>
                 <Text>Fecha y hora del reporte: {formattedDate}</Text>
                 <View style={styles.table}>
