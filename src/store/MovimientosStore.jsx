@@ -5,6 +5,8 @@ import {
   EliminarMovimientos,
   RptMovimientosPorMesAño,
 } from "../index";
+
+// Store para gestion de movimientos financieros
 export const useMovimientosStore = create((set, get) => ({
   datamovimientos: [],
   dataRptMovimientosAñoMes: [],
@@ -12,6 +14,8 @@ export const useMovimientosStore = create((set, get) => ({
   totalMesAñoPagados: 0,
   totalMesAñoPendientes: 0,
   parametros: {},
+  
+  // Obtener movimientos por mes y año
   mostrarMovimientos: async (p) => {
     const response = await MostrarMovimientosPorMesAño(p);
     set({ parametros: p });
@@ -20,6 +24,8 @@ export const useMovimientosStore = create((set, get) => ({
     set({ datamovimientos: response });
     return response;
   },
+  
+  // Calcular totales generales, pagados y pendientes
   calcularTotales: (response) => {
     const dtPagados = response?.filter((item) => item.estado == 1);
     const dtPendientes = response?.filter((item) => item.estado == 0);
@@ -42,6 +48,8 @@ export const useMovimientosStore = create((set, get) => ({
     set({ totalMesAñoPagados: tpagados });
     set({ totalMesAñoPendientes: tpendientes });
   },
+  
+  // Insertar nuevo movimiento y refrescar lista
   insertarMovimientos: async (p) => {
     await InsertarMovimientos(p);
 
@@ -49,12 +57,16 @@ export const useMovimientosStore = create((set, get) => ({
     const { parametros } = get();
     set(mostrarMovimientos(parametros));
   },
+  
+  // Eliminar movimiento y refrescar lista
   eliminarMovimiento: async (p) => {
     await EliminarMovimientos(p);
     const { parametros } = get();
     const { mostrarMovimientos } = get();
     set(mostrarMovimientos(parametros));
   },
+  
+  // Generar reporte de movimientos por año y mes
   rptMovimientosAñoMes: async (p) => {
     const response = await RptMovimientosPorMesAño(p);
     set({ dataRptMovimientosAñoMes: response });

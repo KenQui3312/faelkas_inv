@@ -5,6 +5,7 @@ import { Navigate } from "react-router-dom";
 export const useAuthStore = create((set) => ({
   isAuth:false,
   datauserAuth: [],
+  // Autenticar usuario con email y contraseña
   signInWithEmail: async (p) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: p.correo,
@@ -16,7 +17,7 @@ export const useAuthStore = create((set) => ({
     return data.user;
   },
 
-  
+   // Cerrar sesión del usuario
   signout: async () => {
     const { error } = await supabase.auth.signOut()
     set({ isAuth: false });
