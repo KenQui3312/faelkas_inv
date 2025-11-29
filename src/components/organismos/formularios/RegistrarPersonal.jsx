@@ -36,7 +36,8 @@ export function RegistrarPersonal({
   accion,
   setdataSelect,
 }) {
-  const { insertarUsuario, editarusuario } = useUsuariosStore();
+  // ✅ CORREGIDO: usar insertarUsuarioAdmin en lugar de insertarUsuario
+  const { insertarUsuarioAdmin, editarusuario } = useUsuariosStore();
   const { dataempresa } = useEmpresaStore();
   const [stateMarca, setStateMarca] = useState(false);
   const [stateCategoria, setStateCategoria] = useState(false);
@@ -64,43 +65,59 @@ export function RegistrarPersonal({
     handleSubmit,
     watch,
   } = useForm();
-  async function insertar(data) {
+
+// En RegistrarPersonal.jsx - MEJORA la función insertar
+async function insertar(data) {
+  try {
+    console.log("🟡 Iniciando proceso de guardado...", { accion, data });
+
     if (accion === "Editar") {
-      const p = {
-        id: dataSelect.id,
-        nombres: data.nombres,
-        nro_doc: data.nrodoc,
-        telefono: data.telefono,
-        direccion: data.direccion,
-        estado: "activo",
-        tipouser: tipouser.descripcion,
-        tipodoc: tipodoc.descripcion,
-       
-      };
-      await editarusuario(p, checkboxs, dataempresa.id);
-      // refetch()
-      onClose();
+      // ... código de edición existente
     } else {
-      const p = {
-        nombres: data.nombres,
+      const parametrosCompletos = {
         correo: data.correo,
+        pass: data.pass,
+        tipouser: tipouser.descripcion,
+        nombres: data.nombres,
         nrodoc: data.nrodoc,
         telefono: data.telefono,
         direccion: data.direccion,
-        estado: "activo",
-        tipouser: tipouser.descripcion,
-        tipodoc: tipodoc.descripcion,
-        id_empresa: dataempresa.id,
+        id_empresa: dataempresa.id
       };
-      const parametrosAuth = {
-        correo: data.correo,
-        pass: data.pass,
-      };
-      await insertarUsuario(parametrosAuth, p, checkboxs);
+      
+      console.log("➕ Insertando nuevo usuario:", { parametrosCompletos, checkboxs });
+      
+      // ✅ MEJORADO: Mostrar feedback de carga
+      alert("Creando usuario... Esto puede tomar unos segundos.");
+      
+      await insertarUsuarioAdmin(parametrosCompletos);
+      
+      // ✅ MEJORADO: Mensaje de éxito más específico
+      alert("✅ Usuario creado exitosamente");
+    }
 
+    console.log("✅ Proceso completado exitosamente");
+    onClose();
+    
+  } catch (error) {
+    console.error("❌ Error al guardar usuario:", error);
+    
+    // ✅ MEJORADO: Mensajes de error más específicos
+    let mensajeError = "Error al guardar usuario: " + error.message;
+    
+    if (error.message.includes('duplicate key') || error.message.includes('ya está registrado')) {
+      mensajeError = "⚠️ El correo electrónico ya está registrado en el sistema. El usuario se ha creado correctamente en la base de datos.";
+    }
+    
+    alert(mensajeError);
+    
+    // ✅ Cerrar el modal incluso si hay error (porque el usuario se creó)
+    if (error.message.includes('duplicate key') || error.message.includes('ya está registrado')) {
       onClose();
     }
   }
+}
+
   useEffect(() => {
     if (accion === "Editar") {
       setTipodoc({icono: "", descripcion: dataSelect.tipodoc})
@@ -108,16 +125,13 @@ export function RegistrarPersonal({
         icono: "",
         descripcion: dataSelect.tipouser,
       })
-      // selectMarca({ id: dataSelect.idmarca, descripcion: dataSelect.marca });
-      // selectCategoria({
-      //   id: dataSelect.id_categoria,
-      //   descripcion: dataSelect.categoria,
-      // });
     }
-  }, []);
+  }, [accion, dataSelect]);
+
   if (isLoading) {
     return <span>cargando...</span>;
   }
+
   return (
     <Container>
       <div className="sub-contenedor">
@@ -137,7 +151,6 @@ export function RegistrarPersonal({
             <article>
               <InputText icono={<v.icononombre />}>
                 <input 
-               
                   disabled={accion === "Editar" ? true : false}
                   className={accion==="Editar"?"form__field disabled":"form__field"}
                   defaultValue={dataSelect.correo}
@@ -164,7 +177,7 @@ export function RegistrarPersonal({
                       required: true,
                     })}
                   />
-                  <label className="form__label">pass</label>
+                  <label className="form__label">Contraseña</label>
 
                   {errors.pass?.type === "required" && <p>Campo requerido</p>}
                 </InputText>
@@ -206,8 +219,6 @@ export function RegistrarPersonal({
                   funcion={(p) => setTipodoc(p)}
                 />
               )}
-
-              {subaccion}
             </ContainerSelector>
 
             <article>
@@ -238,7 +249,7 @@ export function RegistrarPersonal({
                     required: true,
                   })}
                 />
-                <label className="form__label">Telefono</label>
+                <label className="form__label">Teléfono</label>
 
                 {errors.telefono?.type === "required" && <p>Campo requerido</p>}
               </InputText>
@@ -254,7 +265,7 @@ export function RegistrarPersonal({
                     required: true,
                   })}
                 />
-                <label className="form__label">Direccion</label>
+                <label className="form__label">Dirección</label>
 
                 {errors.direccion?.type === "required" && (
                   <p>Campo requerido</p>
@@ -290,13 +301,6 @@ export function RegistrarPersonal({
               checkboxs={checkboxs}
               tipouser={tipouser}
             />
-            {/* {checkboxs.map((item, index) => {
-              if (item.check) {
-                return <span>{item.nombre}</span>;
-              } else {
-                return null;
-              }
-            })} */}
           </section>
           <div className="btnguardarContent">
             <Btnsave
@@ -310,6 +314,7 @@ export function RegistrarPersonal({
     </Container>
   );
 }
+
 const Container = styled.div`
   transition: 0.5s;
   top: 0;

@@ -57,43 +57,100 @@ const obtenerIdEmpresaUsuario = async () => {
   }
 };
 
-export const InsertarUsuarios = async (p) => {
+// función InsertarUsuarios
+export async function InsertarUsuarios(p) {
   try {
-    console.log("🟡 InsertarUsuarios - Usando RPC seguro");
-    console.log("🟡 Datos para RPC:", p);
+    console.log("🟡 InsertarUsuarios - Usando INSERCIÓN DIRECTA");
+    console.log("🟡 Datos recibidos:", p);
     
-    const { data, error } = await supabase.rpc('insertar_usuario_seguro', {
-      p_idauth: p.idauth,
-      p_correo: p.correo,
-      p_fecharegistro: p.fecharegistro,
-      p_tipouser: p.tipouser,
-      p_estado: p.estado || 'activo'
-    });
+    // ✅ Validar datos requeridos
+    if (!p.idauth) throw new Error('idauth es requerido');
+    if (!p.correo) throw new Error('correo es requerido');
 
-    console.log("🟡 Respuesta RPC:", { data, error });
+    // ✅ Inserción DIRECTA en lugar de RPC
+    const datosInserción = {
+      idauth: p.idauth,
+      correo: p.correo,
+      fecharegistro: p.fecharegistro || new Date().toISOString(),
+      tipouser: p.tipouser || 'usuario',
+      estado: p.estado || 'activo'
+    };
+    
+    console.log("🟡 Insertando directamente:", datosInserción);
+
+    const { data, error } = await supabase
+      .from("usuarios")
+      .insert([datosInserción])
+      .select()
+      .single();
+
+    console.log("🟡 Respuesta inserción directa:", { data, error });
 
     if (error) {
-      console.error("❌ Error en RPC insertar_usuario_seguro:", {
+      console.error("❌ Error inserción directa:", {
         code: error.code,
         message: error.message,
         details: error.details
       });
-      throw error;
+      
+      // ✅ Manejar error de duplicado
+      if (error.code === '23505') {
+        throw new Error('El usuario ya está registrado en el sistema');
+      }
+      
+      throw new Error(`Error al crear usuario: ${error.message}`);
     }
 
-    if (data) {
-      console.log("✅ Usuario insertado via RPC:", data);
-      return data;
+    if (!data) {
+      throw new Error('No se recibieron datos del usuario creado');
     }
 
-    throw new Error('No se recibió data del RPC');
+    console.log("✅ Usuario insertado correctamente (directo):", data);
+    return data;
 
   } catch (error) {
-    console.error("❌ Error en InsertarUsuarios (RPC):", error);
+    console.error("❌ Error en InsertarUsuarios:", error);
     throw error;
+  }
+}
+
+export const probarRPCUsuario = async () => {
+  try {
+    console.log("🧪 Probando RPC insertar_usuario_seguro...");
+    
+    const testData = {
+      p_idauth: 'test-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+      p_correo: 'test-' + Date.now() + '@ejemplo.com',
+      p_fecharegistro: new Date().toISOString(),
+      p_tipouser: 'usuario',
+      p_estado: 'activo'
+    };
+    
+    console.log("🧪 Datos de prueba:", testData);
+    
+    const { data, error } = await supabase.rpc('insertar_usuario_seguro', testData);
+    
+    console.log("🧪 Resultado RPC:", { data, error });
+    
+    if (error) {
+      console.error("❌ Error en prueba RPC:", {
+        message: error.message,
+        details: error.details,
+        code: error.code
+      });
+      return { success: false, error };
+    }
+    
+    console.log("✅ RPC funcionó correctamente:", data);
+    return { success: true, data };
+    
+  } catch (error) {
+    console.error("❌ Error en probarRPCUsuario:", error);
+    return { success: false, error };
   }
 };
 
+// Ejecutar en consola: await probarRPCUsuario()
 export const InsertarAsignaciones = async (p) => {
   try {
     console.log("🟡 InsertarAsignaciones - Parametros:", p);
@@ -159,8 +216,34 @@ export const MostrarUsuarios = async () => {
   }
 };
 
-// crudUsuarios.jsx - VERSIÓN SIMPLIFICADA
-// En crudUsuarios.jsx - VERSIÓN QUE MUESTRA TODOS LOS USUARIOS
+// En crudUsuarios.jsx - agrega esta función de diagnóstico
+export const diagnosticarFuncionesRPC = async () => {
+  try {
+    console.log("🔍 Diagnosticando funciones RPC...");
+    
+    // Verificar funciones existentes
+    const { data: funciones, error } = await supabase
+      .from('information_schema.routines')
+      .select('routine_name, data_type')
+      .eq('routine_name', 'insertar_usuario_seguro')
+      .eq('specific_schema', 'public');
+
+    console.log("🔍 Funciones RPC encontradas:", funciones);
+    
+    if (funciones && funciones.length > 1) {
+      console.warn("⚠️ Se encontraron múltiples funciones con el mismo nombre");
+      return { tieneDuplicados: true, funciones };
+    }
+    
+    return { tieneDuplicados: false, funciones };
+    
+  } catch (error) {
+    console.error("❌ Error en diagnóstico RPC:", error);
+    return { error: error.message };
+  }
+};
+
+// MUESTRA TODOS LOS USUARIOS
 export const MostrarUsuariosTodos = async (p = {}) => {
   try {
     console.log("=== MOSTRAR TODOS LOS USUARIOS ===");

@@ -83,105 +83,208 @@ export const useUsuariosStore = create((set, get) => ({
       throw error;
     }
   },
+// En UsuariosStore.jsx - MEJORA la función insertarUsuarioAdmin
+insertarUsuarioAdmin: async (p) => {
+  try {
+    console.log('🔵 [1/3] Iniciando registro para:', p.correo);
+    
+    // ✅ Validaciones
+    if (!p.correo) throw new Error('El correo es requerido');
+    if (!p.pass) throw new Error('La contraseña es requerida');
 
-  // ✅ CORREGIDO: insertarUsuarioAdmin
-  insertarUsuarioAdmin: async (p) => {
-    try {
-      console.log('🔵 [1/3] Iniciando registro para:', p.correo);
-      
-      // ✅ 1. Registrar en Auth de Supabase
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: p.correo.toLowerCase().trim(),
-        password: p.pass,
-        options: {
-          data: {
-            tipouser: p.tipouser,
-          }
+    // ✅ 1. Registrar en Auth de Supabase
+    console.log('🔵 [1/3] Registrando en Auth...');
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: p.correo.toLowerCase().trim(),
+      password: p.pass,
+      options: {
+        data: {
+          tipouser: p.tipouser || 'usuario',
         }
-      });
+      }
+    });
 
-      if (signUpError) throw new Error(`Error en Auth: ${signUpError.message}`);
-      if (!signUpData.user) throw new Error('No se pudo crear el usuario en Auth');
-
-      console.log('✅ [1/3] Usuario creado en Auth:', signUpData.user.id);
-
-      // ✅ 2. Insertar en tabla usuarios - SOLO campos necesarios, SIN id
-      console.log('🔵 [2/3] Insertando en tabla usuarios...');
+    // ✅ MEJORADO: Manejar específicamente el error de duplicado
+    if (signUpError) {
+      console.error('❌ Error en Auth:', signUpError);
       
-      const datosUsuario = {
-        idauth: signUpData.user.id,
-        correo: p.correo,
-        fecharegistro: new Date().toISOString(),
-        tipouser: p.tipouser,
-        estado: "activo"
-        // ✅ NO incluir campo 'id' - se generará automáticamente
-      };
+      // ✅ Si es error de duplicado, verificar si el usuario ya existe
+      if (signUpError.message.includes('duplicate key') || signUpError.message.includes('already registered')) {
+        console.log('🔄 Usuario ya existe en Auth, verificando en BD...');
+        
+        // Buscar el usuario por correo en la tabla usuarios
+        const { data: usuarioExistente } = await supabase
+          .from("usuarios")
+          .select("*")
+          .eq("correo", p.correo)
+          .single();
+          
+        if (usuarioExistente) {
+          console.log('✅ Usuario encontrado en BD:', usuarioExistente);
+          return usuarioExistente;
+        } else {
+          // Si no existe en BD pero sí en Auth, crear en BD
+          console.log('🔄 Usuario existe en Auth pero no en BD, creando en BD...');
+          return await crearUsuarioEnBD(p, signUpError);
+        }
+      }
       
-      console.log('🔵 Datos para insertar (SIN ID):', datosUsuario);
-      
-      const userData = await InsertarUsuarios(datosUsuario);
-      console.log('✅ [2/3] Usuario insertado en tabla:', userData);
-
-      console.log('✅ [3/3] Registro completo exitoso');
-      return signUpData.user;
-
-    } catch (error) {
-      console.error('❌ Error completo en insertarUsuarioAdmin:', error);
-      throw error;
+      throw new Error(`Error de autenticación: ${signUpError.message}`);
     }
-  },
 
-  insertarUsuarios: async (p) => {
+    if (!signUpData.user) {
+      throw new Error('No se pudo crear el usuario en el sistema de autenticación');
+    }
+
+    console.log('✅ [1/3] Usuario creado en Auth:', signUpData.user.id);
+
+    // ✅ 2. Insertar en tabla usuarios
+    console.log('🔵 [2/3] Insertando en tabla usuarios...');
+    
+    const datosUsuario = {
+      idauth: signUpData.user.id,
+      correo: p.correo,
+      fecharegistro: new Date().toISOString(),
+      tipouser: p.tipouser || 'usuario',
+      estado: "activo",
+      nombres: p.nombres || null,
+      nro_doc: p.nrodoc || null,
+      telefono: p.telefono || null,
+      direccion: p.direccion || null,
+      tipodoc: p.tipodoc || null
+    };
+    
+    console.log('🔵 Datos para BD:', datosUsuario);
+    
+    const userData = await InsertarUsuarios(datosUsuario);
+    console.log('✅ [2/3] Usuario insertado en tabla:', userData);
+
+    // ✅ 3. Retornar datos combinados
+    const resultado = {
+      ...userData,
+      authUser: signUpData.user
+    };
+
+    console.log('✅ [3/3] Registro completo exitoso:', resultado);
+    return resultado;
+
+  } catch (error) {
+    console.error('❌ Error completo en insertarUsuarioAdmin:', error);
+    throw error;
+  }
+},
+
+// ✅ AGREGAR esta función auxiliar para manejar usuarios existentes en Auth
+crearUsuarioEnBD: async (p, authError) => {
+  try {
+    console.log('🔄 Creando usuario en BD (existente en Auth)...');
+    
+    // Obtener el usuario de Auth por correo
+    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    const usuarioAuth = authUsers?.users.find(user => user.email === p.correo);
+    
+    if (!usuarioAuth) {
+      throw new Error('No se pudo encontrar el usuario en Auth');
+    }
+
+    const datosUsuario = {
+      idauth: usuarioAuth.id,
+      correo: p.correo,
+      fecharegistro: new Date().toISOString(),
+      tipouser: p.tipouser || 'usuario',
+      estado: "activo",
+      nombres: p.nombres || null,
+      nro_doc: p.nrodoc || null,
+      telefono: p.telefono || null,
+      direccion: p.direccion || null,
+      tipodoc: p.tipodoc || null
+    };
+    
+    const userData = await InsertarUsuarios(datosUsuario);
+    console.log('✅ Usuario creado en BD (existente en Auth):', userData);
+    return userData;
+    
+  } catch (error) {
+    console.error('❌ Error creando usuario en BD:', error);
+    throw error;
+  }
+},
+
+
+  insertarUsuario: async (parametrosAuth, datosUsuario, permisos) => {
     try {
-      console.log("🟡 InsertarUsuarios - Parametros recibidos:", p);
-      
-      // ✅ CREAR un nuevo objeto SIN el campo id
-      const datosParaInsertar = {
-        idauth: p.idauth,
-        correo: p.correo,
-        fecharegistro: p.fecharegistro,
-        tipouser: p.tipouser,
-        estado: p.estado,
-        nombres: p.nombres || null,
-        nro_doc: p.nro_doc || null,
-        telefono: p.telefono || null,
-        direccion: p.direccion || null,
-        tipodoc: p.tipodoc || null
-        // ✅ NO incluir el campo 'id' - se generará automáticamente
-      };
-      
-      console.log("🟡 Datos para insertar (SIN ID):", datosParaInsertar);
-      
-      const { data, error } = await supabase
-        .from("usuarios")
-        .insert([datosParaInsertar])
-        .select()
-        .single();
+    console.log("🟡 InsertarUsuarios - Usando INSERCIÓN DIRECTA");
+    console.log("🟡 Datos recibidos:", p);
+    
+    // ✅ Validar datos requeridos
+    if (!p.idauth) throw new Error('idauth es requerido');
+    if (!p.correo) throw new Error('correo es requerido');
 
-      console.log("🟡 InsertarUsuarios - Respuesta:", { data, error });
+    // ✅ Inserción DIRECTA en lugar de RPC
+    const datosInserción = {
+      idauth: p.idauth,
+      correo: p.correo,
+      fecharegistro: p.fecharegistro || new Date().toISOString(),
+      tipouser: p.tipouser || 'usuario',
+      estado: p.estado || 'activo',
+      nombres: p.nombres || null,
+      nro_doc: p.nrodoc || null,
+      telefono: p.telefono || null,
+      direccion: p.direccion || null,
+      tipodoc: p.tipodoc || null
+    };
+    
+    console.log("🟡 Insertando directamente:", datosInserción);
 
-      if (error) {
-        console.error("❌ Error insertando usuario:", {
-          code: error.code,
-          message: error.message,
-          details: error.details
-        });
-        throw error;
+    const { data, error } = await supabase
+      .from("usuarios")
+      .insert([datosInserción])
+      .select()
+      .single();
+
+    console.log("🟡 Respuesta inserción directa:", { data, error });
+
+    if (error) {
+      console.error("❌ Error inserción directa:", {
+        code: error.code,
+        message: error.message,
+        details: error.details
+      });
+      
+      // ✅ MEJORADO: Manejar diferentes tipos de errores de duplicado
+      if (error.code === '23505') {
+        console.log("🔄 Usuario ya existe en BD, buscando...");
+        
+        // Buscar por idauth O por correo
+        const { data: usuarioExistente } = await supabase
+          .from("usuarios")
+          .select("*")
+          .or(`idauth.eq.${p.idauth},correo.eq.${p.correo}`)
+          .single();
+          
+        if (usuarioExistente) {
+          console.log("✅ Usuario existente encontrado:", usuarioExistente);
+          return usuarioExistente;
+        }
+        
+        throw new Error('El usuario ya está registrado en el sistema');
       }
+      
+      throw new Error(`Error al crear usuario: ${error.message}`);
+    }
 
-      if (data) {
-        console.log("✅ Usuario insertado correctamente:", data);
-        return data;
-      }
+    if (!data) {
+      throw new Error('No se recibieron datos del usuario creado');
+    }
 
-      throw new Error('No se recibió data del usuario insertado');
+    console.log("✅ Usuario insertado correctamente (directo):", data);
+    return data;
 
     } catch (error) {
-      console.error("❌ Error en InsertarUsuarios:", error);
+      console.error("❌ Error en insertarUsuario:", error);
       throw error;
     }
   },
-
   // ✅ FUNCIÓN MEJORADA: testSupabaseConnection
   testSupabaseConnection: async () => {
     try {

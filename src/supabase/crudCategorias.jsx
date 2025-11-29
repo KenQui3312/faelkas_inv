@@ -1,5 +1,6 @@
 import { supabase } from "../index";
 import Swal from "sweetalert2";
+
 export async function InsertarCategorias(p) {
   try {
      const { error } = await supabase.rpc("insertarcategorias", p);
@@ -12,24 +13,34 @@ export async function InsertarCategorias(p) {
       });
     }
   } catch (error) {
-    
+    console.error("❌ Error en InsertarCategorias:", error);
   }
- 
 }
 
 export async function MostrarCategorias(p = {}) {
   try {
-    console.log('🔍 Mostrando TODAS las categorías...');
+    console.log('🔍 Mostrando categorías con parámetros:', p);
     
-    const { data, error } = await supabase
+    let query = supabase
       .from('categorias')
-      .select('*')
-      .order('descripcion');
+      .select('*');
+    
+    // ✅ Filtrar por empresa si se proporciona
+    if (p.id_empresa) {
+      query = query.eq('id_empresa', p.id_empresa);
+      console.log(`🏢 Filtrando categorías por empresa: ${p.id_empresa}`);
+    }
+    
+    query = query.order('descripcion');
+    
+    const { data, error } = await query;
     
     if (error) throw error;
+    
+    console.log('✅ Categorías encontradas:', data?.length || 0);
     return data || [];
   } catch (error) {
-    console.error('Error:', error);
+    console.error('❌ Error en MostrarCategorias:', error);
     return [];
   }
 }
@@ -47,6 +58,7 @@ export async function EliminarCategorias(p) {
     alert(error.error_description || error.message + " eliminar categorias");
   }
 }
+
 export async function EditarCategorias(p) {
   try {
     const { error } = await supabase
@@ -60,6 +72,7 @@ export async function EditarCategorias(p) {
     alert(error.error_description || error.message + " editar categorias");
   }
 }
+
 export async function EliminarCategoriasTodas(p) {
   try {
     const { error } = await supabase
@@ -80,6 +93,7 @@ export async function EliminarCategoriasTodas(p) {
     alert(error.error_description || error.message + " eliminar categorias");
   }
 }
+
 export async function BuscarCategorias(p) {
   try {
     const { data } = await supabase
@@ -89,5 +103,8 @@ export async function BuscarCategorias(p) {
       .ilike("descripcion","%"+ p.descripcion+"%")
       
     return data;
-  } catch (error) {}
+  } catch (error) {
+    console.error("❌ Error en BuscarCategorias:", error);
+    return [];
+  }
 }

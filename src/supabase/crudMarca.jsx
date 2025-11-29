@@ -12,7 +12,7 @@ export async function InsertarMarca(p) {
     });
   }
 }
-
+/*
 export async function MostrarMarca(p = {}) {
   try {
     console.log('🔍 Mostrando TODAS las marcas...');
@@ -27,6 +27,36 @@ export async function MostrarMarca(p = {}) {
   } catch (error) {
     console.error('Error:', error);
     return []; // ✅ Siempre retorna array
+  }
+}
+*/
+
+// En crudMarca.jsx - función MostrarMarca
+export async function MostrarMarca(p = {}) {
+  try {
+    console.log('🔍 Mostrando marcas con parámetros:', p);
+    
+    let query = supabase
+      .from('marca')
+      .select('*');
+    
+    // ✅ Filtrar por empresa si se proporciona
+    if (p.id_empresa) {
+      query = query.eq('id_empresa', p.id_empresa);
+      console.log(`🏢 Filtrando por empresa: ${p.id_empresa}`);
+    }
+    
+    query = query.order('descripcion');
+    
+    const { data, error } = await query;
+    
+    if (error) throw error;
+    
+    console.log('✅ Marcas encontradas:', data?.length || 0);
+    return data || [];
+  } catch (error) {
+    console.error('❌ Error en MostrarMarca:', error);
+    return [];
   }
 }
 

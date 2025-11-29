@@ -69,7 +69,7 @@ export function ProductosTemplate({
       <section className="area1">
         <ContentFiltro>
           <Title>
-            Productos - Todas las Empresas
+            Productos
           </Title>
           <Btnfiltro
             funcion={nuevoRegistro}

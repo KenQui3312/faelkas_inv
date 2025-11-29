@@ -21,31 +21,75 @@ import { CirclePicker } from "react-color";
 import Emojipicker from "emoji-picker-react";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
 import { Device } from "../../../styles/breakpoints";
+
 export function RegistrarProductos({ onClose, dataSelect, accion }) {
   const { insertarProductos, editarProductos } = useProductosStore();
-  const { datamarca, selectMarca, marcaItemSelect } = useMarcaStore();
-  const { datacategorias, categoriaItemSelect, selectCategoria } =
-    useCategoriasStore();
+  const { datamarca, selectMarca, marcaItemSelect, mostrarMarca } = useMarcaStore();
+  const { datacategorias, categoriaItemSelect, selectCategoria, mostrarCategorias } = useCategoriasStore();
   const { dataempresa } = useEmpresaStore();
   const [stateMarca, setStateMarca] = useState(false);
   const [stateCategoria, setStateCategoria] = useState(false);
   const [openRegistroMarca, SetopenRegistroMarca] = useState(false);
   const [openRegistroCategoria, SetopenRegistroCategoria] = useState(false);
   const [subaccion, setAccion] = useState("");
+
+  // CARGAR MARCAS Y CATEGORÍAS AL ABRIR EL MODAL
+  useEffect(() => {
+    console.log("🟡 Modal RegistrarProductos abierto - Cargando datos...");
+    
+    // Cargar marcas
+    if (dataempresa?.id) {
+      console.log("🏢 Cargando marcas para empresa:", dataempresa.id);
+      mostrarMarca({ id_empresa: dataempresa.id });
+    } else {
+      console.log("🏢 Cargando todas las marcas (sin empresa)");
+      mostrarMarca();
+    }
+
+    // Cargar categorías
+    if (dataempresa?.id) {
+      console.log("🏢 Cargando categorías para empresa:", dataempresa.id);
+      mostrarCategorias({ id_empresa: dataempresa.id });
+    } else {
+      console.log("🏢 Cargando todas las categorías (sin empresa)");
+      mostrarCategorias();
+    }
+
+    // Si es edición, cargar los datos seleccionados
+    if (accion === "Editar") {
+      console.log("✏️ Modo edición - Cargando datos del producto:", dataSelect);
+      selectMarca({id: dataSelect.idmarca, descripcion: dataSelect.marca});
+      selectCategoria({id: dataSelect.id_categoria, descripcion: dataSelect.categoria});
+    }
+  }, [accion, dataSelect, dataempresa, mostrarMarca, mostrarCategorias, selectMarca, selectCategoria]);
+
+  // DEBUG: Ver estado de las marcas y categorías
+  useEffect(() => {
+    console.log("📦 Estado de datamarca:", datamarca);
+    console.log("🔢 Cantidad de marcas disponibles:", datamarca?.length || 0);
+    console.log("🏷️ Marca seleccionada:", marcaItemSelect);
+    console.log("📦 Estado de datacategorias:", datacategorias);
+    console.log("🔢 Cantidad de categorías disponibles:", datacategorias?.length || 0);
+    console.log("🏷️ Categoría seleccionada:", categoriaItemSelect);
+  }, [datamarca, marcaItemSelect, datacategorias, categoriaItemSelect]);
+
   function nuevoRegistroMarca() {
     SetopenRegistroMarca(!openRegistroMarca);
     setAccion("Nuevo");
   }
+
   function nuevoRegistroCategoria() {
     SetopenRegistroCategoria(!openRegistroCategoria);
     setAccion("Nuevo");
   }
+
   const {
     register,
     formState: { errors, isDirty },
     handleSubmit,
     watch,
   } = useForm();
+
   async function insertar(data) {
     if (accion === "Editar") {
       const p = {
@@ -63,7 +107,6 @@ export function RegistrarProductos({ onClose, dataSelect, accion }) {
       };
 
       await editarProductos(p);
-
       onClose();
     } else {
       const p = {
@@ -83,15 +126,29 @@ export function RegistrarProductos({ onClose, dataSelect, accion }) {
       onClose();
     }
   }
-  useEffect(() => {
-    if (accion === "Editar") {
-      selectMarca({id:dataSelect.idmarca,descripcion:dataSelect.marca})
-      selectCategoria({id:dataSelect.id_categoria,descripcion:dataSelect.categoria})
+
+  // Función para recargar marcas manualmente
+  const recargarMarcas = () => {
+    console.log("🔄 Recargando marcas manualmente...");
+    if (dataempresa?.id) {
+      mostrarMarca({ id_empresa: dataempresa.id });
+    } else {
+      mostrarMarca();
     }
-  }, []);
+  };
+
+  // Función para recargar categorías manualmente
+  const recargarCategorias = () => {
+    console.log("🔄 Recargando categorías manualmente...");
+    if (dataempresa?.id) {
+      mostrarCategorias({ id_empresa: dataempresa.id });
+    } else {
+      mostrarCategorias();
+    }
+  };
+
   return (
     <Container>
-     
       <div className="sub-contenedor">
         <div className="headers">
           <section>
@@ -126,32 +183,44 @@ export function RegistrarProductos({ onClose, dataSelect, accion }) {
                 )}
               </InputText>
             </article>
+            
             <ContainerSelector>
               <label>Marca: </label>
               <Selector
                 state={stateMarca}
                 color="#fc6027"
                 texto1="🍿"
-                texto2={marcaItemSelect?.descripcion}
+                texto2={marcaItemSelect?.descripcion || "Seleccionar marca"}
                 funcion={() => setStateMarca(!stateMarca)}
               />
+              
+              {/* Botón para recargar marcas */}
+              <Btnfiltro
+                funcion={recargarMarcas}
+                bgcolor="#f6f3f3"
+                textcolor="#353535"
+                icono={<v.actualizar />}
+                title="Recargar marcas"
+              />
+              
+              {/* Botón para agregar nueva marca */}
               <Btnfiltro
                 funcion={nuevoRegistroMarca}
                 bgcolor="#f6f3f3"
                 textcolor="#353535"
                 icono={<v.agregar />}
+                title="Agregar nueva marca"
               />
+              
               {stateMarca && (
                 <ListaGenerica
                   bottom="-260px"
                   scroll="scroll"
                   setState={() => setStateMarca(!stateMarca)}
-                  data={datamarca}
+                  data={datamarca || []}
                   funcion={selectMarca}
                 />
               )}
-
-              {subaccion}
             </ContainerSelector>
 
             <article>
@@ -171,6 +240,7 @@ export function RegistrarProductos({ onClose, dataSelect, accion }) {
                 {errors.stock?.type === "required" && <p>Campo requerido</p>}
               </InputText>
             </article>
+            
             <article>
               <InputText icono={<v.iconostockminimo />}>
                 <input
@@ -190,32 +260,47 @@ export function RegistrarProductos({ onClose, dataSelect, accion }) {
                 )}
               </InputText>
             </article>
+            
             <ContainerSelector>
               <label>Categoria: </label>
               <Selector
                 state={stateCategoria}
                 color="#fc6027"
                 texto1="🍿"
-                texto2={categoriaItemSelect?.descripcion}
+                texto2={categoriaItemSelect?.descripcion || "Seleccionar categoría"}
                 funcion={() => setStateCategoria(!stateCategoria)}
               />
+              
+              {/* Botón para recargar categorías */}
+              <Btnfiltro
+                funcion={recargarCategorias}
+                bgcolor="#f6f3f3"
+                textcolor="#353535"
+                icono={<v.actualizar />}
+                title="Recargar categorías"
+              />
+              
+              {/* Botón para agregar nueva categoría */}
               <Btnfiltro
                 funcion={nuevoRegistroCategoria}
                 bgcolor="#f6f3f3"
                 textcolor="#353535"
                 icono={<v.agregar />}
+                title="Agregar nueva categoría"
               />
+              
               {stateCategoria && (
                 <ListaGenerica
                   bottom="50px"
                   scroll="scroll"
                   setState={() => setStateCategoria(!stateCategoria)}
-                  data={datacategorias}
+                  data={datacategorias || []}
                   funcion={selectCategoria}
                 />
               )}
             </ContainerSelector>
           </section>
+          
           <section className="seccion2">
             <article>
               <InputText icono={<v.iconocodigobarras />}>
@@ -235,6 +320,7 @@ export function RegistrarProductos({ onClose, dataSelect, accion }) {
                 )}
               </InputText>
             </article>
+            
             <article>
               <InputText icono={<v.iconocodigointerno />}>
                 <input
@@ -253,6 +339,7 @@ export function RegistrarProductos({ onClose, dataSelect, accion }) {
                 )}
               </InputText>
             </article>
+            
             <article>
               <InputText icono={<v.iconoprecioventa />}>
                 <input
@@ -272,6 +359,7 @@ export function RegistrarProductos({ onClose, dataSelect, accion }) {
                 )}
               </InputText>
             </article>
+            
             <article>
               <InputText icono={<v.iconopreciocompra />}>
                 <input
@@ -292,6 +380,7 @@ export function RegistrarProductos({ onClose, dataSelect, accion }) {
               </InputText>
             </article>
           </section>
+          
           <div className="btnguardarContent">
             <Btnsave
               icono={<v.iconoguardar />}
@@ -300,6 +389,7 @@ export function RegistrarProductos({ onClose, dataSelect, accion }) {
             />
           </div>
         </form>
+        
         {openRegistroMarca && (
           <RegistrarMarca
             dataSelect={dataSelect}
@@ -307,6 +397,7 @@ export function RegistrarProductos({ onClose, dataSelect, accion }) {
             accion={subaccion}
           />
         )}
+        
         {openRegistroCategoria && (
           <RegistrarCategorias
             dataSelect={dataSelect}
@@ -318,6 +409,7 @@ export function RegistrarProductos({ onClose, dataSelect, accion }) {
     </Container>
   );
 }
+
 const Container = styled.div`
   transition: 0.5s;
   top: 0;
