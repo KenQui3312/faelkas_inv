@@ -1,0 +1,9 @@
+1. Instala el motor que hace funcionar tu proyecto (Vite) y el conector para React.
+npm install vite @vitejs/plugin-react --save-dev
+
+#2. Instala TODO lo que necesita tu proyecto (todas las librerías).
+npm install
+#3.  Actualiza la librería de navegación entre páginas.
+npm install react-router-dom@latest
+# 4. arranca el servidor local del proyecto
+run dev
