@@ -48,7 +48,7 @@ export function RegistrarPersonal({
   const [checkboxs, setCheckboxs] = useState([]);
   const [tipouser, setTipouser] = useState({
     icono: "",
-    descripcion: "empleado",
+    descripcion: "Empleado",
   });
   const [tipodoc, setTipodoc] = useState({ icono: "", descripcion: "dni" });
   const { datapermisosEdit, mostrarPermisosEdit } = usePermisosStore();

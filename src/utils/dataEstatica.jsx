@@ -99,11 +99,11 @@ export const DataModulosConfiguracion =[
 //tipo usuario
 export const TipouserData = [
   {
-    descripcion: "empleado",
+    descripcion: "Empleado",
     icono: "🪖",
   },
   {
-    descripcion: "administrador",
+    descripcion: "Administrador",
     icono: "👑",
   },
 ];

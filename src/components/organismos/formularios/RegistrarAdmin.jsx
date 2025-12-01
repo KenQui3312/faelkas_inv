@@ -38,7 +38,7 @@ export function RegistrarAdmin({ state, setState }) {
       const p = {
         correo: data.correo,
         pass: data.pass,
-        tipouser: "superadmin",
+        tipouser: "Empleado",
       };
 
       console.log("🔵 Iniciando registro con datos:", p);
