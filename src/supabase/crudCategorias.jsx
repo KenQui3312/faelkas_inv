@@ -1,10 +1,11 @@
 import { supabase } from "../index";
 import Swal from "sweetalert2";
 
+// Inserta categoria usando la funcion RPC de Supabase
 export async function InsertarCategorias(p) {
   try {
-     const { error } = await supabase.rpc("insertarcategorias", p);
-     if (error) {
+    const { error } = await supabase.rpc("insertarcategorias", p); 
+    if (error) {
       Swal.fire({
         icon: "error",
         title: "Oops...",
@@ -17,27 +18,20 @@ export async function InsertarCategorias(p) {
   }
 }
 
+// Obtiene categorias, con filtro opcional por empresa
 export async function MostrarCategorias(p = {}) {
   try {
-    console.log('🔍 Mostrando categorías con parámetros:', p);
-    
-    let query = supabase
-      .from('categorias')
-      .select('*');
-    
-    // ✅ Filtrar por empresa si se proporciona
+    let query = supabase.from('categorias').select('*');
+
     if (p.id_empresa) {
-      query = query.eq('id_empresa', p.id_empresa);
-      console.log(`🏢 Filtrando categorías por empresa: ${p.id_empresa}`);
+      query = query.eq('id_empresa', p.id_empresa); 
     }
-    
-    query = query.order('descripcion');
-    
+
+    query = query.order('descripcion'); 
+
     const { data, error } = await query;
-    
     if (error) throw error;
-    
-    console.log('✅ Categorías encontradas:', data?.length || 0);
+
     return data || [];
   } catch (error) {
     console.error('❌ Error en MostrarCategorias:', error);
@@ -45,43 +39,44 @@ export async function MostrarCategorias(p = {}) {
   }
 }
 
+// Elimina una categoria por ID
 export async function EliminarCategorias(p) {
   try {
     const { error } = await supabase
       .from("categorias")
       .delete()
-      .eq("id", p.id);
-    if (error) {
-      alert("Error al eliminar", error);
-    }
+      .eq("id", p.id); 
+
+    if (error) alert("Error al eliminar", error);
   } catch (error) {
     alert(error.error_description || error.message + " eliminar categorias");
   }
 }
 
+// Edita una categoria por ID
 export async function EditarCategorias(p) {
   try {
     const { error } = await supabase
       .from("categorias")
       .update(p)
-      .eq("id", p.id);
-    if (error) {
-      alert("Error al editar categoria", error);
-    }
+      .eq("id", p.id); 
+
+    if (error) alert("Error al editar categoria", error);
   } catch (error) {
     alert(error.error_description || error.message + " editar categorias");
   }
 }
 
+// Elimina todas las categorias de un usuario
 export async function EliminarCategoriasTodas(p) {
   try {
     const { error } = await supabase
       .from("categorias")
       .delete()
-      .eq("idusuario", p.idusuario);
-    if (error) {
-      alert("Error al eliminar", error);
-    }
+      .eq("idusuario", p.idusuario); 
+
+    if (error) alert("Error al eliminar", error);
+
     Swal.fire({
       position: "top-end",
       icon: "success",
@@ -94,14 +89,15 @@ export async function EliminarCategoriasTodas(p) {
   }
 }
 
+// Busca categorias por empresa y coincidencia en descripcion
 export async function BuscarCategorias(p) {
   try {
     const { data } = await supabase
       .from("categorias")
       .select()
       .eq("id_empresa", p.id_empresa)
-      .ilike("descripcion","%"+ p.descripcion+"%")
-      
+      .ilike("descripcion", "%" + p.descripcion + "%"); 
+
     return data;
   } catch (error) {
     console.error("❌ Error en BuscarCategorias:", error);

@@ -1,4 +1,6 @@
 import styled from "styled-components";
+
+// Boton circular personalizable para iconos
 export function BtnCircular({
   icono,
   width,

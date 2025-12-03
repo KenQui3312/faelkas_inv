@@ -1,5 +1,7 @@
 import styled from "styled-components";
 import { v } from "../../index";
+
+// Boton desplegable con icono y texto
 export function Btndesplegable({ text, bgcolor, textcolor, funcion }) {
   return (
     <Container $bgcolor={bgcolor} $textcolor={textcolor} onClick={funcion}>

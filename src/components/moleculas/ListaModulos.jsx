@@ -2,6 +2,8 @@ import styled from "styled-components";
 import { useGlobalStore } from "../../store/GlobalStore";
 import { useEffect, useState } from "react";
 import { usePermisosStore } from "../../store/PermisosStore";
+
+// Lista de modulos con checkboxes (para crear o editar permisos)
 export function ListaModulos({ setCheckboxs, checkboxs,accion }) {
   const { datamodulos } = useGlobalStore();
   const { datapermisosEdit } = usePermisosStore();
@@ -11,6 +13,7 @@ export function ListaModulos({ setCheckboxs, checkboxs,accion }) {
   
   console.log(select);
   useEffect(() => {
+    // Cuando es edicion, marcar automaticamente los modulos que ya tienen permiso
     if (accion=="Editar"){
        let allDocs = [];
     datamodulos.map((element) => {
@@ -47,6 +50,7 @@ export function ListaModulos({ setCheckboxs, checkboxs,accion }) {
     // setnuevadata(allDocs)
     // console.log("nuevas", allDocs);
   }, [datapermisosEdit]);
+    // Alternar el check de un modulo
   function handlecheckbox(id) {
     setCheckboxs((prev) => {
       return prev?.map((item) => {
