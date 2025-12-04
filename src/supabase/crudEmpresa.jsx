@@ -1,24 +1,38 @@
 import Swal from "sweetalert2";
 import { supabase } from "../index";
 
-export const MostrarEmpresa = async (p) => {
-  const { data } = await supabase.rpc("mostrarempresaasignaciones", {
-    _id_usuario: p.idusuario,
-  }).maybeSingle();
-  if (data) {
+export async function MostrarEmpresa(p = {}) {
+  try {
+    console.log("🔍 MostrarEmpresa - Parámetros:", p);
+    
+    // Asegúrate de que p no sea undefined
+    const idusuario = p?.idusuario;
+    
+    if (!idusuario) {
+      console.error("❌ MostrarEmpresa: No se proporcionó idusuario");
+      return null;
+    }
+    
+    // Tu consulta a Supabase - verifica que la tabla y columna existen
+    const { data, error } = await supabase
+      .from("empresa")
+      .select("*")
+      .eq("iduseradmin", idusuario)
+      .maybeSingle(); // Usa maybeSingle en lugar de single para evitar error si no hay datos
+    
+    if (error) {
+      console.error("❌ Error en consulta MostrarEmpresa:", error);
+      return null;
+    }
+    
+    console.log("✅ MostrarEmpresa - Datos encontrados:", data);
     return data;
+    
+  } catch (error) {
+    console.error("❌ Error en MostrarEmpresa:", error);
+    return null;
   }
-};/*
-export const ContarUsuariosXempresa = async (p) => {
-  const { data,error } = await supabase.rpc("contar_usuarios_por_empresa", {
-    _id_empresa: p.id_empresa,
-  }).maybeSingle();
- 
-  if (data) {
-    return data;
-  }
-};*/
-// En crudEmpresa.jsx - VERSIÓN CORREGIDA
+}
 export const ContarUsuariosXempresa = async (p) => {
   try {
     console.log("🔢 Contando usuarios para empresa:", p.id_empresa);

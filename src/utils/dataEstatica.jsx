@@ -75,7 +75,7 @@ export const DataModulosConfiguracion =[
 
   {
     title:"Tu empresa",
-    subtitle:"configura tus opciones básicas",
+    subtitle:"Información de la empresa",
     icono:"https://i.ibb.co/x7mHPgm/administracion-de-empresas.png",
     link:"/configurar/empresa",
     
@@ -114,7 +114,7 @@ export const TipoDocData = [
     icono: "🪖",
   },
   {
-    descripcion: "Libreta electoral",
+    descripcion: "Pasaporte",
     icono: "👑",
   },
   {

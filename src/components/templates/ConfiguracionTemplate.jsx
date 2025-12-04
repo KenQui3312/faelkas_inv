@@ -9,28 +9,6 @@ import { Mensaje } from "../moleculas/Mensaje";
 export function ConfiguracionTemplate() {
   const { datapermisos, compararPermisos } = usePermisosStore();
   const [statePermiso, setStatePermiso] = useState(false);
-  // const {data,isLoading,error} = useQuery({queryKey:["comparar permsiso"],queryFn:()=>compararPermisos()})
-
-  // useEffect(() => {
-  //   compararPermisos();
-  //   // datapermisos.forEach((item) => {
-  //   //   let modulo = item.modulos.nombre;
-  //   //   console.log(modulo)
-  //   //   DataModulosConfiguracion.forEach((itemmodulos) => {
-  //   //     if (itemmodulos.title === modulo) {
-  //   //       itemmodulos.state = true;
-  //   //     } else {
-          
-  //   //     }
-  //   //   });
-  //   // });
-  // }, [datapermisos]);
-  // if (isLoading){
-  //   return <span>Cargando</span>
-  // }
-  // if(error){
-  //   return <span>error</span>
-  // }
   return (
     <Container>
      
@@ -44,8 +22,6 @@ export function ConfiguracionTemplate() {
                 <div className="card-image">
                   <img src={item.icono} />
                 </div>
-       
-
                 <div className="card-info-wrapper">
                   <div className="card-info">
                     <i className="fa-duotone fa-unicorn"></i>
