@@ -7,7 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 export const queryClient = new QueryClient();
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/faelkas_inv">
       <QueryClientProvider client={queryClient}>
         <App />
       </QueryClientProvider>
