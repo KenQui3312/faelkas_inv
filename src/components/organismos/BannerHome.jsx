@@ -6,14 +6,15 @@ import { useEmpresaStore } from "../../store/EmpresaStore";
 
 // Importación de iconos necesarios para las opciones
 import { FaCog, FaExchangeAlt, FaChartBar } from 'react-icons/fa'; 
+import {Link} from 'react-router-dom';
 
 // =========================================================================
 // 1. Componente de Opciones (CardOption)
 // =========================================================================
 
-const CardOption = ({ icon, text, href }) => {
+const CardOption = ({ icon, text, to }) => {
   return (
-    <CardOptionContainer as="a" href={href}>
+    <CardOptionContainer as={Link} to={to}>
       <div className="icon-wrapper">
         {icon}
       </div>
@@ -28,7 +29,7 @@ const CardOption = ({ icon, text, href }) => {
 
 export function BannerHome() {
   const { dataempresa } = useEmpresaStore();
-  
+ 
   return (
     <Container>
       <div className="content-wrapper-context" style={{ backgroundColor: "#fcfcfcff"}}>
@@ -44,17 +45,17 @@ export function BannerHome() {
           <CardOption
             icon={<FaCog />}
             text="Opciones"
-            href="/configurar"
+            to="/configurar"
           />
           <CardOption
             icon={<FaExchangeAlt />}
             text="Entradas y Salidas"
-            href="/kardex"
+            to="/kardex"
           />
           <CardOption
             icon={<FaChartBar />}
             text="Reportes"
-            href="/reportes"
+            to="/reportes"
           />
         </ContentOptions>
       </div>
