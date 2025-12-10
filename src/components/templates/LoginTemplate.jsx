@@ -32,7 +32,7 @@ export function LoginTemplate() {
   const [stateInicio, setStateInicio] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ CORREGIDO: Mover setTheme a useEffect
+ 
   useEffect(() => {
     setTheme("light");
   }, [setTheme]);
